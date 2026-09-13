@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Compose · Proto A refined — Block palette</title>
+  <title>Compose · Proto A refined — Grid-first</title>
   <style>
     :root {
       --sb-void: #07070A;
@@ -20,12 +20,13 @@
       --sb-border: #2a2a34;
       --sb-radius-control: 14px;
       --sb-radius-pill: 999px;
-      --sb-radius-tile: 22%;
       --sb-motion-fast: 120ms;
       --sb-motion-med: 220ms;
       --sb-motion-slow: 420ms;
       --phone-w: 390px;
       --phone-h: 844px;
+      --grid-h: 112px;
+      --handle-w: 44px;
     }
     @media (prefers-reduced-motion: reduce) {
       :root {
@@ -101,52 +102,50 @@
       line-height: 1.35;
     }
     .section-label {
-      font-size: 0.66rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
+      font-size: 0.68rem;
+      font-weight: 650;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--sb-steel-dim);
-      margin-bottom: 7px;
+      margin: 0 0 6px;
     }
     .chips {
       display: flex;
-      gap: 8px;
       flex-wrap: wrap;
-      margin-bottom: 12px;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-shrink: 0;
     }
     .chip {
       appearance: none;
-      border: 1.5px solid var(--sb-steel-dim);
+      border: 1.5px solid var(--sb-border);
       background: var(--sb-panel);
       color: var(--sb-steel);
       border-radius: var(--sb-radius-pill);
-      padding: 8px 14px;
-      font-size: 0.85rem;
-      font-weight: 600;
+      padding: 7px 12px;
+      font-size: 0.8rem;
+      font-weight: 650;
       font-variant-numeric: tabular-nums;
       cursor: pointer;
       transition: border-color var(--sb-motion-fast), color var(--sb-motion-fast),
-        box-shadow var(--sb-motion-fast), background var(--sb-motion-fast), transform var(--sb-motion-fast);
+        box-shadow var(--sb-motion-fast), background var(--sb-motion-fast);
     }
-    .chip:hover { border-color: var(--sb-steel); color: var(--sb-paper); }
+    .chip:hover { border-color: var(--sb-steel-dim); color: var(--sb-paper); }
     .chip:focus-visible {
       outline: 2px solid var(--sb-voltage);
       outline-offset: 2px;
     }
-    .chip:active { transform: scale(0.97); }
     .chip[aria-pressed="true"] {
       border-color: var(--sb-voltage);
       color: var(--sb-paper);
-      background: var(--sb-panel-elevated);
       box-shadow: 0 0 0 1px var(--sb-voltage), 0 0 18px var(--sb-voltage-glow);
+      background: var(--sb-panel-elevated);
     }
+    .chip:disabled { opacity: 0.35; cursor: default; }
     .chip.speed-pick {
-      flex: 1;
-      min-width: 0;
+      min-width: 72px;
       text-align: center;
-      padding: 12px 8px;
-      border-radius: var(--sb-radius-control);
-      font-size: 0.82rem;
+      line-height: 1.15;
     }
     .chip.speed-pick .bm {
       display: block;
@@ -159,7 +158,7 @@
     }
     .chip.speed-pick[aria-pressed="true"] .bm { color: var(--sb-steel); }
 
-    .block-panel {
+    .grid-panel {
       background: var(--sb-panel);
       border: 1.5px solid var(--sb-border);
       border-radius: var(--sb-radius-control);
@@ -167,20 +166,29 @@
       margin-bottom: 10px;
       transition: border-color var(--sb-motion-med), box-shadow var(--sb-motion-med);
       flex-shrink: 0;
-      max-height: 310px;
       display: flex;
       flex-direction: column;
       min-height: 0;
     }
-    .block-panel.locked {
+    .grid-panel.locked {
       border-color: var(--sb-voltage);
       box-shadow: 0 0 0 1px var(--sb-voltage), 0 0 28px var(--sb-voltage-glow);
+    }
+    .grid-panel.shake {
+      animation: panelShake 280ms ease-out;
+    }
+    @keyframes panelShake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-3px); }
+      40% { transform: translateX(3px); }
+      60% { transform: translateX(-2px); }
+      80% { transform: translateX(2px); }
     }
     .block-head {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       gap: 8px;
     }
     .block-head .title {
@@ -193,200 +201,283 @@
       font-variant-numeric: tabular-nums;
     }
     .block-head .remain.full { color: var(--sb-success); font-weight: 600; }
-    .seg-bar {
-      display: flex;
-      height: 8px;
-      border-radius: 6px;
-      overflow: hidden;
+
+    .count-rail {
+      position: relative;
+      height: var(--grid-h);
       background: var(--sb-void);
-      gap: 1px;
-      margin-bottom: 10px;
-      flex-shrink: 0;
+      border-radius: 10px;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
     }
-    .seg-bar .seg {
-      flex: 1;
-      background: #1e1e28;
-      transition: background var(--sb-motion-med);
+    .tick-row {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      gap: 0;
+      pointer-events: none;
+      z-index: 0;
     }
-    .seg-bar .seg.filled {
-      background: linear-gradient(90deg, var(--sb-voltage-deep), var(--sb-voltage));
+    .tick {
+      flex: 1 1 0;
+      min-width: 0;
+      border-right: 1px solid rgba(92, 92, 106, 0.35);
+      position: relative;
     }
-    .placed {
+    .tick:last-child { border-right: none; }
+    .tick::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 6px;
+      width: 3px;
+      height: 3px;
+      margin-left: -1.5px;
+      border-radius: 50%;
+      background: rgba(92, 92, 106, 0.55);
+    }
+    .tick.hl {
+      background: rgba(194, 75, 255, 0.12);
+      box-shadow: inset 0 0 0 1px rgba(194, 75, 255, 0.35);
+    }
+    .tick.danger-hl {
+      background: rgba(251, 113, 133, 0.12);
+      box-shadow: inset 0 0 0 1px rgba(251, 113, 133, 0.45);
+    }
+
+    .spans-layer {
+      position: absolute;
+      inset: 4px;
+      z-index: 1;
+    }
+    .span {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      background: var(--sb-panel-elevated);
+      border: 1.5px solid #3a3a48;
+      border-radius: 10px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      min-height: 56px;
-      overflow-y: auto;
-      flex: 1;
-      position: relative;
-      padding-bottom: 2px;
-    }
-    .placed:empty::after {
-      content: "Pick a move below · choose speed · place";
-      color: var(--sb-steel-dim);
-      font-size: 0.78rem;
-      padding: 14px 4px;
-      text-align: center;
-      display: block;
-    }
-    .atom-card {
-      display: flex;
       align-items: center;
-      gap: 8px;
-      background: var(--sb-panel-elevated);
-      border: 1.5px solid var(--sb-border);
-      border-radius: var(--sb-radius-control);
-      padding: 8px 8px 8px 6px;
-      cursor: pointer;
-      user-select: none;
+      justify-content: center;
+      gap: 2px;
+      padding: 4px 10px;
+      cursor: grab;
       touch-action: none;
-      position: relative;
+      overflow: hidden;
       transition: border-color var(--sb-motion-fast), box-shadow var(--sb-motion-fast),
-        transform var(--sb-motion-fast), background var(--sb-motion-fast), opacity var(--sb-motion-fast);
-      animation: placeIn var(--sb-motion-med) ease-out;
-      flex-shrink: 0;
+        background var(--sb-motion-fast), opacity var(--sb-motion-fast);
+      animation: spanIn var(--sb-motion-med) ease-out;
+      min-width: 0;
     }
-    .atom-card.flash-snap {
-      box-shadow: 0 0 0 1px var(--sb-voltage), 0 0 20px var(--sb-voltage-glow);
+    @keyframes spanIn {
+      from { opacity: 0; transform: scaleX(0.92); }
+      to { opacity: 1; transform: none; }
+    }
+    .span .s-name {
+      font-weight: 650;
+      font-size: 0.72rem;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      line-height: 1.15;
+      pointer-events: none;
+    }
+    .span .s-count {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      font-size: 0.88rem;
+      line-height: 1.1;
+      pointer-events: none;
+    }
+    .span .s-count.live { color: var(--sb-voltage); }
+    .span .s-speed {
+      font-size: 0.55rem;
+      color: var(--sb-steel);
+      text-transform: lowercase;
+      letter-spacing: 0.02em;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--sb-motion-fast);
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .span.selected {
+      border-color: var(--sb-voltage);
+      box-shadow: 0 0 0 1px var(--sb-voltage), 0 0 18px var(--sb-voltage-glow);
+      z-index: 3;
+    }
+    /* Speed only when selected and wide enough to read */
+    .span.selected:not(.narrow):not(.micro) .s-speed { opacity: 1; }
+    .span.narrow {
+      padding: 4px 6px;
+    }
+    .span.narrow .s-name {
+      font-size: 0.62rem;
+    }
+    .span.micro {
+      padding: 2px 4px;
+    }
+    .span.micro .s-name {
+      display: block;
+      font-size: 0.58rem;
+      max-width: 100%;
+    }
+    .span.micro .s-speed { display: none; }
+    .span.micro .s-count {
+      font-size: 0.95rem;
+    }
+    .span.flash-snap {
+      box-shadow: 0 0 0 1px var(--sb-voltage), 0 0 22px var(--sb-voltage-glow);
       border-color: var(--sb-voltage);
     }
-    .atom-card.dup-flash {
+    .span.dup-flash {
       animation: dupFlash 280ms ease-out;
     }
     @keyframes dupFlash {
       0% { box-shadow: 0 0 0 1px var(--sb-voltage), 0 0 28px var(--sb-voltage-glow); border-color: var(--sb-voltage); }
       100% { box-shadow: none; }
     }
-    @keyframes placeIn {
-      from { opacity: 0; transform: translateY(6px) scale(0.98); }
-      to { opacity: 1; transform: none; }
-    }
-    .atom-card.selected {
-      border-color: var(--sb-voltage);
-      box-shadow: 0 0 0 1px var(--sb-voltage), 0 0 18px var(--sb-voltage-glow);
-    }
-    .atom-card.dragging-extend {
-      border-color: var(--sb-voltage);
-      box-shadow: 0 8px 28px rgba(0,0,0,.45), 0 0 0 1px var(--sb-voltage), 0 0 26px var(--sb-voltage-glow);
-      transform: scale(1.02);
-      z-index: 3;
-    }
-    .atom-card.dragging-reorder {
-      opacity: 0.92;
-      border-color: var(--sb-voltage);
-      box-shadow: 0 12px 32px rgba(0,0,0,.5), 0 0 0 1px var(--sb-voltage), 0 0 24px var(--sb-voltage-glow);
-      transform: scale(1.03);
+    .span.dragging-resize {
       z-index: 4;
-      position: relative;
     }
-    .atom-card.ghost-slot {
+    .span.dragging-reorder {
+      opacity: 0.55;
+      z-index: 2;
+    }
+    .span.invalid {
+      border-color: var(--sb-danger);
+      box-shadow: 0 0 0 1px var(--sb-danger), 0 0 14px rgba(251, 113, 133, 0.35);
+    }
+    .span.ghost {
       border: 1.5px dashed var(--sb-voltage);
-      background: rgba(194, 75, 255, 0.08);
+      background: rgba(194, 75, 255, 0.1);
       box-shadow: none;
+      pointer-events: none;
       opacity: 1;
-      min-height: 44px;
+    }
+    .span.ghost * { visibility: hidden; }
+
+    .resize-handle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: var(--handle-w);
+      min-width: 44px;
+      cursor: ew-resize;
+      z-index: 5;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      touch-action: none;
+      background: transparent;
+    }
+    .span.selected .resize-handle { display: flex; }
+    .resize-handle.left { left: 0; transform: translateX(-50%); }
+    .resize-handle.right { right: 0; transform: translateX(50%); }
+    .resize-handle .knob {
+      width: 6px;
+      height: 36px;
+      border-radius: 4px;
+      background: var(--sb-voltage);
+      box-shadow: 0 0 12px var(--sb-voltage-glow);
       pointer-events: none;
     }
-    .atom-card.ghost-slot * { visibility: hidden; }
-    .drag-handle {
-      width: 22px;
-      height: 36px;
+    .resize-handle.danger .knob {
+      background: var(--sb-danger);
+      box-shadow: 0 0 12px rgba(251, 113, 133, 0.5);
+    }
+
+    .span-more {
+      position: absolute;
+      top: 2px;
+      right: 6px;
+      appearance: none;
+      border: none;
+      background: rgba(7, 7, 10, 0.55);
+      color: var(--sb-steel);
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 6;
+      padding: 0;
+    }
+    .span.selected .span-more {
+      display: flex;
+      right: 18px; /* clear of right resize knob */
+      top: 2px;
+    }
+    .span.selected.narrow .span-more,
+    .span.selected.micro .span-more {
+      right: auto;
+      left: 50%;
+      transform: translateX(-50%);
+      top: -6px;
+      width: 26px;
+      height: 22px;
+      font-size: 0.9rem;
+    }
+    .span-more:hover { color: var(--sb-paper); background: rgba(7, 7, 10, 0.75); }
+    .span-more:focus-visible {
+      outline: 2px solid var(--sb-voltage);
+      outline-offset: 1px;
+    }
+
+    .empty-hint {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 12px 18px;
+      color: var(--sb-steel-dim);
+      font-size: 0.78rem;
+      line-height: 1.35;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .empty-hint.hide { display: none; }
+
+    .float-span {
+      position: fixed;
+      pointer-events: none;
+      z-index: 60;
+      background: var(--sb-panel-elevated);
+      border: 1.5px solid var(--sb-voltage);
+      border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.5), 0 0 0 1px var(--sb-voltage), 0 0 24px var(--sb-voltage-glow);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 3px;
-      color: var(--sb-steel-dim);
-      flex-shrink: 0;
-      cursor: grab;
-      border-radius: 8px;
+      gap: 2px;
+      padding: 4px 10px;
+      opacity: 0.95;
     }
-    .drag-handle:active { cursor: grabbing; }
-    .drag-handle span {
-      display: block;
-      width: 12px;
-      height: 2px;
-      background: currentColor;
-      border-radius: 1px;
-    }
-    .atom-card .face {
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
-      min-width: 0;
-      flex: 1;
-    }
-    .atom-card .name {
+    .float-span .s-name {
       font-weight: 650;
-      font-size: 0.9rem;
+      font-size: 0.72rem;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
-    .atom-card .count {
+    .float-span .s-count {
       font-variant-numeric: tabular-nums;
-      font-weight: 650;
-      font-size: 0.92rem;
-      color: var(--sb-paper);
-      min-width: 1.4em;
-    }
-    .atom-card .count.live {
+      font-weight: 700;
+      font-size: 0.88rem;
       color: var(--sb-voltage);
     }
-    .speed-chip {
-      font-size: 0.62rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      color: var(--sb-steel);
-      background: transparent;
-      border: 1px solid var(--sb-steel-dim);
-      border-radius: var(--sb-radius-pill);
-      padding: 3px 7px;
-      text-transform: lowercase;
-      flex-shrink: 0;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity var(--sb-motion-fast);
-    }
-    .atom-card.selected .speed-chip { opacity: 1; }
-    .more-btn {
-      appearance: none;
-      border: none;
-      background: transparent;
-      color: var(--sb-steel);
-      width: 32px;
-      height: 32px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 1.1rem;
-      line-height: 1;
-      flex-shrink: 0;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity var(--sb-motion-fast), background var(--sb-motion-fast), color var(--sb-motion-fast);
-    }
-    .atom-card.selected .more-btn {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .more-btn:hover { background: rgba(255,255,255,0.06); color: var(--sb-paper); }
-    .more-btn:focus-visible {
-      outline: 2px solid var(--sb-voltage);
-      outline-offset: 1px;
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .extend-hint {
-      position: absolute;
-      right: 40px;
-      bottom: 2px;
-      font-size: 0.58rem;
-      color: var(--sb-steel-dim);
-      opacity: 0;
-      pointer-events: none;
-      letter-spacing: 0.02em;
-    }
-    .atom-card.selected .extend-hint { opacity: 0.85; }
 
     .win-banner {
       display: none;
@@ -408,6 +499,7 @@
       from { box-shadow: 0 0 8px var(--sb-voltage-glow); }
       to { box-shadow: 0 0 22px var(--sb-voltage-glow); }
     }
+
     .actions {
       display: flex;
       gap: 8px;
@@ -448,12 +540,6 @@
     .btn-primary:hover:not(:disabled) {
       box-shadow: 0 0 26px var(--sb-voltage-glow);
     }
-    .btn-danger {
-      background: transparent;
-      color: var(--sb-danger);
-      border: 1.5px solid rgba(251, 113, 133, 0.45);
-      width: 100%;
-    }
 
     .palette-wrap {
       margin-top: auto;
@@ -467,16 +553,17 @@
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 8px;
-      max-height: 168px;
+      max-height: 200px;
       overflow-y: auto;
       padding-bottom: 2px;
     }
+    .palette.shake { animation: panelShake 280ms ease-out; }
     .move-tile {
       appearance: none;
       border: 1.5px solid var(--sb-border);
       background: var(--sb-panel);
       color: var(--sb-paper);
-      border-radius: calc(var(--sb-radius-control) + 4px);
+      border-radius: 18px;
       padding: 11px 10px;
       text-align: left;
       cursor: pointer;
@@ -487,8 +574,6 @@
       flex-direction: column;
       justify-content: center;
       gap: 2px;
-      /* soft squircle feel */
-      border-radius: 18px;
     }
     .move-tile:hover:not(:disabled) { border-color: var(--sb-steel-dim); }
     .move-tile:focus-visible {
@@ -516,7 +601,6 @@
       color: var(--sb-steel);
     }
 
-    /* Speed step / sheets */
     .sheet {
       display: none;
       background: var(--sb-panel-elevated);
@@ -524,7 +608,7 @@
       border-radius: var(--sb-radius-control);
       padding: 12px;
       margin-top: 8px;
-      animation: placeIn var(--sb-motion-med) ease-out;
+      animation: spanIn var(--sb-motion-med) ease-out;
     }
     .sheet.open { display: block; }
     .sheet-title {
@@ -537,6 +621,51 @@
       gap: 8px;
       margin-top: 12px;
     }
+    .feedback {
+      margin: 8px 0 0;
+      font-size: 0.72rem;
+      color: var(--sb-steel);
+      min-height: 1.1em;
+    }
+    .feedback.err { color: var(--sb-danger); }
+    .edit-sheet-body { display: flex; flex-direction: column; gap: 8px; }
+    .len-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .stepper button {
+      appearance: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1.5px solid var(--sb-border);
+      background: var(--sb-panel);
+      color: var(--sb-paper);
+      font-size: 1.1rem;
+      font-weight: 650;
+      cursor: pointer;
+    }
+    .stepper button:disabled { opacity: 0.35; cursor: default; }
+    .stepper button:focus-visible {
+      outline: 2px solid var(--sb-voltage);
+      outline-offset: 1px;
+    }
+    .len-val {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      font-size: 1rem;
+      min-width: 2ch;
+      text-align: center;
+    }
+
     .toast {
       position: absolute;
       left: 16px;
@@ -547,156 +676,107 @@
       color: var(--sb-paper);
       padding: 10px 14px;
       border-radius: var(--sb-radius-control);
-      font-size: 0.8rem;
-      text-align: center;
+      font-size: 0.82rem;
       opacity: 0;
       pointer-events: none;
-      transform: translateY(8px);
+      transform: translateY(6px);
       transition: opacity var(--sb-motion-med), transform var(--sb-motion-med);
-      z-index: 20;
-      box-shadow: 0 8px 24px rgba(0,0,0,.4);
+      z-index: 40;
+      text-align: center;
     }
-    .toast.show {
-      opacity: 1;
-      transform: none;
-    }
-    .toast.warn { border-color: rgba(251, 113, 133, 0.5); }
+    .toast.show { opacity: 1; transform: none; }
+    .toast.warn { border-color: rgba(251, 113, 133, 0.55); color: #fecdd3; }
 
     .menu-backdrop {
-      display: none;
       position: absolute;
       inset: 0;
-      background: rgba(0,0,0,0.45);
+      background: rgba(0,0,0,.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--sb-motion-med);
       z-index: 30;
     }
-    .menu-backdrop.open { display: block; }
+    .menu-backdrop.open { opacity: 1; pointer-events: auto; }
     .action-menu {
-      display: none;
       position: absolute;
-      left: 20px;
-      right: 20px;
-      bottom: 28px;
+      left: 16px;
+      right: 16px;
+      bottom: 24px;
       background: var(--sb-panel-elevated);
       border: 1.5px solid var(--sb-border);
       border-radius: 18px;
-      padding: 8px;
-      z-index: 31;
+      padding: 10px;
+      z-index: 35;
+      transform: translateY(12px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--sb-motion-med), transform var(--sb-motion-med);
       box-shadow: 0 16px 48px rgba(0,0,0,.55), 0 0 24px var(--sb-voltage-glow);
-      animation: placeIn var(--sb-motion-med) ease-out;
     }
-    .action-menu.open { display: block; }
-    .action-menu .menu-label {
-      font-size: 0.68rem;
-      color: var(--sb-steel-dim);
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      padding: 8px 12px 6px;
-      font-weight: 600;
+    .action-menu.open {
+      opacity: 1;
+      transform: none;
+      pointer-events: auto;
+    }
+    .menu-label {
+      font-size: 0.72rem;
+      color: var(--sb-steel);
+      padding: 4px 10px 8px;
+      font-weight: 650;
     }
     .menu-item {
       appearance: none;
+      display: block;
       width: 100%;
       text-align: left;
       border: none;
       background: transparent;
       color: var(--sb-paper);
-      padding: 13px 14px;
+      padding: 12px 12px;
+      border-radius: 12px;
       font-size: 0.92rem;
-      font-weight: 600;
-      border-radius: var(--sb-radius-control);
+      font-weight: 650;
       cursor: pointer;
     }
     .menu-item:hover { background: rgba(255,255,255,0.05); }
-    .menu-item:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-    .menu-item.danger { color: var(--sb-danger); }
     .menu-item:focus-visible {
       outline: 2px solid var(--sb-voltage);
-      outline-offset: -2px;
+      outline-offset: 1px;
     }
+    .menu-item:disabled { opacity: 0.4; cursor: default; }
+    .menu-item.danger { color: var(--sb-danger); }
 
-    .edit-sheet-body .len-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-top: 12px;
-    }
-    .edit-sheet-body .len-val {
-      font-variant-numeric: tabular-nums;
-      font-weight: 650;
-      font-size: 1.1rem;
-    }
-    .stepper {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-    .stepper button {
-      appearance: none;
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      border: 1.5px solid var(--sb-steel-dim);
-      background: var(--sb-panel);
-      color: var(--sb-paper);
-      font-size: 1.2rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .stepper button:disabled { opacity: 0.35; cursor: default; }
-    .stepper button:focus-visible {
-      outline: 2px solid var(--sb-voltage);
-      outline-offset: 2px;
-    }
-
-    .shake {
-      animation: shake var(--sb-motion-med) ease;
-    }
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-4px); }
-      75% { transform: translateX(4px); }
-    }
     .foot-note {
-      text-align: center;
-      font-size: 0.7rem;
       color: var(--sb-steel-dim);
-      max-width: 390px;
-      margin-top: 2px;
-    }
-    .feedback {
-      min-height: 1.1em;
-      font-size: 0.7rem;
-      color: var(--sb-steel-dim);
-      margin-top: 6px;
+      font-size: 0.75rem;
       text-align: center;
+      margin: 0;
     }
-    .feedback.err { color: var(--sb-danger); }
   </style>
 </head>
 <body data-sb-density="product">
-  <p class="proto-meta"><strong>Compose · Proto A refined</strong> — Layered palette: size → move → speed → place · extend · edit · reorder · duplicate.</p>
-  <div class="phone" role="application" aria-label="Compose prototype A refined">
+  <p class="proto-meta"><strong>Compose · Proto A refined</strong> — Grid-first: size → move → speed → place on count grid · resize edges · drag to reorder · ⋯ to edit.</p>
+  <div class="phone" role="application" aria-label="Compose prototype A refined grid-first">
     <div class="notch" aria-hidden="true"></div>
     <div class="screen" id="screen">
       <header class="topbar">
         <h1>Compose · Proto A refined</h1>
       </header>
-      <p class="hypo">Block size → pick move → speed chips → place. Drag handle to reorder · drag count to extend · ⋯ to edit / duplicate.</p>
+      <p class="hypo">Block size → pick move → speed → place on grid. Drag span edges to resize · drag span to reorder · ⋯ to edit / duplicate.</p>
 
       <div class="section-label">Block size</div>
       <div class="chips" role="group" aria-label="Block size in counts" id="sizeChips"></div>
 
-      <div class="block-panel" id="blockPanel">
+      <div class="grid-panel" id="gridPanel">
         <div class="block-head">
           <span class="title" id="blockTitle">16-count block</span>
           <span class="remain" id="remainLabel">0 / 16 placed</span>
         </div>
-        <div class="seg-bar" id="segBar" aria-hidden="true"></div>
-        <div class="placed" id="placedList" aria-live="polite"></div>
+        <div class="count-rail" id="countRail" role="grid" aria-label="Count grid">
+          <div class="tick-row" id="tickRow" aria-hidden="true"></div>
+          <div class="spans-layer" id="spansLayer"></div>
+          <div class="empty-hint" id="emptyHint">Tap a move to place on the grid.</div>
+        </div>
         <div class="win-banner" id="winBanner" role="status">✦ Block locked</div>
       </div>
 
@@ -706,7 +786,7 @@
       </div>
 
       <div class="palette-wrap">
-        <div class="section-label" id="paletteLabel">Moves · tap to stack</div>
+        <div class="section-label" id="paletteLabel">Moves · tap to place</div>
         <div class="palette" id="palette" role="list"></div>
 
         <div class="sheet" id="speedSheet" aria-live="polite">
@@ -752,39 +832,18 @@
       </div>
     </div>
   </div>
-  <p class="foot-note">Hypothesis prototype — not final spec</p>
+  <p class="foot-note">Hypothesis prototype — not final spec · Electric Night · grid-only editor</p>
 
   <script>
 (function () {
   const SPEEDS = ["slow", "normal", "fast"];
 
-  // One palette row per move. Push has per-speed baseMin; others share baseMin across speeds.
   const LIBRARY = [
-    {
-      id: "push",
-      title: "Push",
-      speeds: { slow: 4, normal: 2, fast: 1 }
-    },
-    {
-      id: "hover",
-      title: "Hover",
-      speeds: { slow: 4, normal: 4, fast: 4 }
-    },
-    {
-      id: "tap-back",
-      title: "Tap back",
-      speeds: { slow: 2, normal: 2, fast: 2 }
-    },
-    {
-      id: "arm-race",
-      title: "Arm race",
-      speeds: { slow: 1, normal: 1, fast: 1 }
-    },
-    {
-      id: "climb",
-      title: "Climb",
-      speeds: { slow: 8, normal: 8, fast: 8 }
-    }
+    { id: "push", title: "Push", speeds: { slow: 4, normal: 2, fast: 1 } },
+    { id: "hover", title: "Hover", speeds: { slow: 4, normal: 4, fast: 4 } },
+    { id: "tap-back", title: "Tap back", speeds: { slow: 2, normal: 2, fast: 2 } },
+    { id: "arm-race", title: "Arm race", speeds: { slow: 1, normal: 1, fast: 1 } },
+    { id: "climb", title: "Climb", speeds: { slow: 8, normal: 8, fast: 8 } }
   ];
 
   const SIZES = [8, 16, 24, 32];
@@ -795,15 +854,18 @@
   let selectedUid = null;
   let pendingMoveId = null;
   let pendingSpeed = "normal";
-  let editDraft = null; // { uid, speed, counts }
+  let editDraft = null;
   let uidSeq = 1;
+  let suppressClick = false;
 
   const sizeChips = document.getElementById("sizeChips");
-  const segBar = document.getElementById("segBar");
-  const placedList = document.getElementById("placedList");
+  const tickRow = document.getElementById("tickRow");
+  const spansLayer = document.getElementById("spansLayer");
+  const countRail = document.getElementById("countRail");
+  const emptyHint = document.getElementById("emptyHint");
   const remainLabel = document.getElementById("remainLabel");
   const blockTitle = document.getElementById("blockTitle");
-  const blockPanel = document.getElementById("blockPanel");
+  const gridPanel = document.getElementById("gridPanel");
   const winBanner = document.getElementById("winBanner");
   const palette = document.getElementById("palette");
   const btnUndo = document.getElementById("btnUndo");
@@ -861,6 +923,15 @@
   function canFitMove(moveId, speed) {
     return baseMin(moveId, speed) <= remaining();
   }
+  function starts() {
+    const map = {};
+    let cursor = 0;
+    stack.forEach((a) => {
+      map[a.uid] = cursor;
+      cursor += a.counts;
+    });
+    return map;
+  }
   function toast(msg, warn) {
     toastEl.textContent = msg;
     toastEl.classList.toggle("warn", !!warn);
@@ -868,20 +939,17 @@
     clearTimeout(toast._t);
     toast._t = setTimeout(() => toastEl.classList.remove("show"), 1800);
   }
-
   function closeSheets() {
     pendingMoveId = null;
     speedSheet.classList.remove("open");
     editSheet.classList.remove("open");
     editDraft = null;
-    paletteLabel.textContent = "Moves · tap to stack";
+    paletteLabel.textContent = "Moves · tap to place";
   }
-
   function closeMenu() {
     actionMenu.classList.remove("open");
     menuBackdrop.classList.remove("open");
   }
-
   function openMenu(uid) {
     selectedUid = uid;
     const item = stack.find((a) => a.uid === uid);
@@ -895,6 +963,40 @@
     actionMenu.classList.add("open");
     menuBackdrop.classList.add("open");
     render();
+  }
+  function flashSnap(el) {
+    if (!el) return;
+    el.classList.add("flash-snap");
+    setTimeout(() => el.classList.remove("flash-snap"), 160);
+  }
+  function shakePanel() {
+    gridPanel.classList.remove("shake");
+    void gridPanel.offsetWidth;
+    gridPanel.classList.add("shake");
+  }
+  function cellWidth() {
+    const w = spansLayer.clientWidth || countRail.clientWidth - 8;
+    return w / blockSize;
+  }
+  function pct(start, counts) {
+    return {
+      left: (start / blockSize) * 100 + "%",
+      width: (counts / blockSize) * 100 + "%"
+    };
+  }
+
+  // --- highlight ticks during resize ---
+  function clearTickHl() {
+    tickRow.querySelectorAll(".tick").forEach((t) => {
+      t.classList.remove("hl", "danger-hl");
+    });
+  }
+  function highlightRange(start, counts, danger) {
+    clearTickHl();
+    const ticks = tickRow.children;
+    for (let i = start; i < start + counts && i < ticks.length; i++) {
+      ticks[i].classList.add(danger ? "danger-hl" : "hl");
+    }
   }
 
   function renderChips() {
@@ -918,205 +1020,393 @@
     });
   }
 
-  function renderSeg() {
-    segBar.innerHTML = "";
-    const u = used();
+  function renderTicks() {
+    tickRow.innerHTML = "";
     for (let i = 0; i < blockSize; i++) {
-      const s = document.createElement("div");
-      s.className = "seg" + (i < u ? " filled" : "");
-      segBar.appendChild(s);
+      const t = document.createElement("div");
+      t.className = "tick";
+      t.setAttribute("role", "gridcell");
+      t.dataset.i = String(i);
+      tickRow.appendChild(t);
     }
   }
 
-  function flashSnap(el) {
-    if (!el) return;
-    el.classList.add("flash-snap");
-    setTimeout(() => el.classList.remove("flash-snap"), 160);
-  }
+  function renderSpans() {
+    spansLayer.innerHTML = "";
+    emptyHint.classList.toggle("hide", stack.length > 0);
+    const st = starts();
 
-  function renderPlaced() {
-    // Preserve scroll
-    const scrollTop = placedList.scrollTop;
-    placedList.innerHTML = "";
-
-    stack.forEach((item, index) => {
+    stack.forEach((item) => {
       const m = libById(item.moveId);
-      const card = document.createElement("div");
-      card.className = "atom-card" + (item.uid === selectedUid ? " selected" : "");
-      card.dataset.uid = item.uid;
-      card.setAttribute("role", "listitem");
-      card.setAttribute(
+      const start = st[item.uid];
+      const pos = pct(start, item.counts);
+      const span = document.createElement("div");
+      const selected = item.uid === selectedUid;
+      span.className = "span" + (selected ? " selected" : "");
+      span.dataset.uid = item.uid;
+      span.style.left = pos.left;
+      span.style.width = pos.width;
+      span.setAttribute(
         "aria-label",
-        m.title + ", " + item.counts + " counts, " + item.speed
+        m.title + ", " + item.counts + " counts, " + item.speed + (selected ? ", selected" : "")
       );
+      span.setAttribute("role", "button");
+      span.tabIndex = 0;
 
-      const handle = document.createElement("div");
-      handle.className = "drag-handle";
-      handle.title = "Drag to reorder";
-      handle.innerHTML = "<span></span><span></span><span></span>";
-      handle.addEventListener("pointerdown", (e) => startReorder(e, item.uid, card));
+      // After layout, mark density for face + ⋯ placement
+      requestAnimationFrame(() => {
+        const w = span.offsetWidth;
+        if (w < 52) {
+          span.classList.add("micro");
+          name.textContent = m.title.charAt(0);
+        } else if (w < 96) {
+          span.classList.add("narrow");
+        }
+      });
 
-      const face = document.createElement("div");
-      face.className = "face";
-      face.innerHTML =
-        '<span class="name">' +
-        m.title +
-        '</span><span class="count" data-count>' +
-        item.counts +
-        "</span>";
-
-      const speedChip = document.createElement("span");
-      speedChip.className = "speed-chip";
-      speedChip.textContent = item.speed;
+      const name = document.createElement("div");
+      name.className = "s-name";
+      name.textContent = m.title;
+      const count = document.createElement("div");
+      count.className = "s-count";
+      count.dataset.count = "1";
+      count.textContent = String(item.counts);
+      const speed = document.createElement("div");
+      speed.className = "s-speed";
+      speed.textContent = item.speed;
 
       const more = document.createElement("button");
       more.type = "button";
-      more.className = "more-btn";
+      more.className = "span-more";
       more.setAttribute("aria-label", "More actions");
       more.textContent = "⋯";
       more.addEventListener("click", (e) => {
         e.stopPropagation();
         openMenu(item.uid);
       });
+      more.addEventListener("pointerdown", (e) => e.stopPropagation());
 
-      const hint = document.createElement("span");
-      hint.className = "extend-hint";
-      hint.textContent = "drag count to extend";
+      const hL = document.createElement("div");
+      hL.className = "resize-handle left";
+      hL.setAttribute("aria-label", "Resize start");
+      hL.innerHTML = '<div class="knob"></div>';
+      hL.addEventListener("pointerdown", (e) => startResize(e, item.uid, "left", span));
 
-      card.appendChild(handle);
-      card.appendChild(face);
-      card.appendChild(speedChip);
-      card.appendChild(more);
-      card.appendChild(hint);
+      const hR = document.createElement("div");
+      hR.className = "resize-handle right";
+      hR.setAttribute("aria-label", "Resize end");
+      hR.innerHTML = '<div class="knob"></div>';
+      hR.addEventListener("pointerdown", (e) => startResize(e, item.uid, "right", span));
 
-      // Tap to select; long-press opens menu
+      span.appendChild(name);
+      span.appendChild(count);
+      span.appendChild(speed);
+      span.appendChild(more);
+      span.appendChild(hL);
+      span.appendChild(hR);
+
       let pressTimer = null;
       let longPressed = false;
-      card.addEventListener("pointerdown", (e) => {
-        if (e.target.closest(".drag-handle") || e.target.closest(".more-btn")) return;
+
+      span.addEventListener("pointerdown", (e) => {
+        if (e.target.closest(".resize-handle") || e.target.closest(".span-more")) return;
+        if (e.button != null && e.button !== 0) return;
         longPressed = false;
         pressTimer = setTimeout(() => {
           longPressed = true;
           openMenu(item.uid);
         }, 520);
-        // Extend gesture from face/count
-        startExtend(e, item.uid, card, () => {
+        startReorder(e, item.uid, span, () => {
           clearTimeout(pressTimer);
         });
       });
-      card.addEventListener("pointerup", () => {
-        clearTimeout(pressTimer);
-      });
-      card.addEventListener("pointercancel", () => clearTimeout(pressTimer));
-      card.addEventListener("click", (e) => {
-        if (e.target.closest(".drag-handle") || e.target.closest(".more-btn")) return;
-        if (longPressed) return;
-        if (dragState.didDrag) return;
+      span.addEventListener("pointerup", () => clearTimeout(pressTimer));
+      span.addEventListener("pointercancel", () => clearTimeout(pressTimer));
+      span.addEventListener("click", (e) => {
+        if (e.target.closest(".resize-handle") || e.target.closest(".span-more")) return;
+        if (longPressed || suppressClick) return;
         selectedUid = item.uid === selectedUid ? null : item.uid;
         closeSheets();
+        closeMenu();
         render();
       });
+      span.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          selectedUid = item.uid === selectedUid ? null : item.uid;
+          render();
+        }
+      });
 
-      placedList.appendChild(card);
+      spansLayer.appendChild(span);
     });
-
-    placedList.scrollTop = scrollTop;
   }
 
-  // --- Extend by horizontal drag on card body ---
-  const dragState = {
-    mode: null,
+  // --- Resize via edge handles ---
+  const resize = {
+    active: false,
     uid: null,
+    edge: null,
     startX: 0,
-    startY: 0,
     startCounts: 0,
+    startStart: 0,
     lastSnapped: 0,
-    didDrag: false,
-    pointerId: null,
-    onCancelLong: null
+    invalid: false
   };
 
-  function startExtend(e, uid, card, onCancelLong) {
-    if (e.button != null && e.button !== 0) return;
+  function startResize(e, uid, edge, spanEl) {
+    e.stopPropagation();
+    e.preventDefault();
     const item = stack.find((a) => a.uid === uid);
     if (!item) return;
-    dragState.mode = "maybe-extend";
-    dragState.uid = uid;
-    dragState.startX = e.clientX;
-    dragState.startY = e.clientY;
-    dragState.startCounts = item.counts;
-    dragState.lastSnapped = item.counts;
-    dragState.didDrag = false;
-    dragState.pointerId = e.pointerId;
-    dragState.onCancelLong = onCancelLong;
-    try { card.setPointerCapture(e.pointerId); } catch (_) {}
+    selectedUid = uid;
+    // Ensure selected chrome without full re-render mid-gesture
+    spansLayer.querySelectorAll(".span").forEach((s) => {
+      s.classList.toggle("selected", s.dataset.uid === uid);
+    });
+    resize.active = true;
+    resize.uid = uid;
+    resize.edge = edge;
+    resize.startX = e.clientX;
+    resize.startCounts = item.counts;
+    resize.startStart = starts()[uid];
+    resize.lastSnapped = item.counts;
+    resize.invalid = false;
+    suppressClick = true;
+    spanEl.classList.add("dragging-resize", "selected");
+    try { e.target.setPointerCapture(e.pointerId); } catch (_) {}
 
     const onMove = (ev) => {
-      if (dragState.uid !== uid) return;
-      const dx = ev.clientX - dragState.startX;
-      const dy = ev.clientY - dragState.startY;
-      if (dragState.mode === "maybe-extend") {
-        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-        if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) {
-          // vertical — abandon extend (reorder uses handle)
-          endExtendListeners();
-          return;
-        }
-        dragState.mode = "extend";
-        dragState.didDrag = true;
-        if (dragState.onCancelLong) dragState.onCancelLong();
-        selectedUid = uid;
-        card.classList.add("dragging-extend", "selected");
-      }
-      if (dragState.mode !== "extend") return;
+      if (!resize.active || resize.uid !== uid) return;
       ev.preventDefault();
+      const cw = cellWidth();
+      const dx = ev.clientX - resize.startX;
       const step = baseMin(item.moveId, item.speed);
-      const remOthers = remainingExcluding(uid);
-      // ~10px per count unit, snap to step
-      const raw = dragState.startCounts + Math.round(dx / 10);
+      const remCap = remainingExcluding(uid);
+      // Both edges adjust length; left edge mirrors so drag-out grows
+      let deltaCounts = Math.round(dx / Math.max(1, cw));
+      if (edge === "left") deltaCounts = -deltaCounts;
+
+      const raw = resize.startCounts + deltaCounts;
+      let danger = false;
       let next = snapDown(Math.max(step, raw), step);
-      if (next > remOthers) next = snapDown(remOthers, step);
+      if (raw < step) danger = true;
+      if (raw > remCap) danger = true;
+      if (next > remCap) next = snapDown(remCap, step);
       if (next < step) next = step;
+      // Past end of block
+      if (resize.startStart + next > blockSize) {
+        next = snapDown(blockSize - resize.startStart, step);
+        danger = true;
+      }
+      if (next < step) next = step;
+
+      resize.invalid = danger;
+      const handle = spanEl.querySelector(".resize-handle." + edge);
+      if (handle) handle.classList.toggle("danger", danger);
+      spanEl.classList.toggle("invalid", danger);
+
+      const visualStart = resize.startStart;
+      const visualCounts = next;
+      const pos = pct(visualStart, visualCounts);
+      spanEl.style.left = pos.left;
+      spanEl.style.width = pos.width;
+      const countEl = spanEl.querySelector("[data-count]");
+      if (countEl) {
+        countEl.textContent = String(next);
+        countEl.classList.add("live");
+      }
+      highlightRange(visualStart, next, danger);
+
       if (next !== item.counts) {
         item.counts = next;
-        const countEl = card.querySelector("[data-count]");
-        if (countEl) {
-          countEl.textContent = String(next);
-          countEl.classList.add("live");
+        if (next !== resize.lastSnapped) {
+          resize.lastSnapped = next;
+          flashSnap(spanEl);
         }
-        if (next !== dragState.lastSnapped) {
-          dragState.lastSnapped = next;
-          flashSnap(card);
-        }
-        // live update remain/seg without full re-render
         updateRemainLive();
+        // Shift following spans live
+        const st = starts();
+        spansLayer.querySelectorAll(".span").forEach((s) => {
+          const u = s.dataset.uid;
+          const it = stack.find((a) => a.uid === u);
+          if (!it) return;
+          const p = pct(st[u], it.counts);
+          s.style.left = p.left;
+          s.style.width = p.width;
+        });
       }
     };
 
     const onUp = () => {
-      endExtendListeners();
-      card.classList.remove("dragging-extend");
-      const countEl = card.querySelector("[data-count]");
-      if (countEl) countEl.classList.remove("live");
-      if (dragState.mode === "extend") {
-        flashSnap(card);
-        render();
-      }
-      // keep didDrag true briefly so click doesn't toggle
-      setTimeout(() => { dragState.didDrag = false; }, 0);
-      dragState.mode = null;
-      dragState.uid = null;
-    };
-
-    function endExtendListeners() {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
+      resize.active = false;
+      clearTickHl();
+      spanEl.classList.remove("dragging-resize", "invalid");
+      const countEl = spanEl.querySelector("[data-count]");
+      if (countEl) countEl.classList.remove("live");
+      if (resize.invalid) shakePanel();
+      flashSnap(spanEl);
+      render();
+      setTimeout(() => { suppressClick = false; }, 0);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  }
+
+  // --- Reorder by dragging span along timeline ---
+  const reorder = {
+    active: false,
+    maybe: false,
+    uid: null,
+    fromIndex: -1,
+    ghostIndex: -1,
+    startX: 0,
+    startY: 0,
+    float: null,
+    onCancelLong: null
+  };
+
+  function startReorder(e, uid, spanEl, onCancelLong) {
+    const fromIndex = stack.findIndex((a) => a.uid === uid);
+    if (fromIndex < 0) return;
+    reorder.maybe = true;
+    reorder.active = false;
+    reorder.uid = uid;
+    reorder.fromIndex = fromIndex;
+    reorder.ghostIndex = fromIndex;
+    reorder.startX = e.clientX;
+    reorder.startY = e.clientY;
+    reorder.onCancelLong = onCancelLong;
+
+    const onMove = (ev) => {
+      if (reorder.uid !== uid) return;
+      const dx = ev.clientX - reorder.startX;
+      const dy = ev.clientY - reorder.startY;
+      if (!reorder.active) {
+        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+        if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 14) {
+          // vertical abandon
+          cleanup();
+          return;
+        }
+        // begin reorder
+        reorder.active = true;
+        reorder.maybe = false;
+        suppressClick = true;
+        if (reorder.onCancelLong) reorder.onCancelLong();
+        selectedUid = uid;
+
+        const rect = spanEl.getBoundingClientRect();
+        const float = document.createElement("div");
+        float.className = "float-span";
+        const m = libById(stack[fromIndex].moveId);
+        float.innerHTML =
+          '<div class="s-name">' + m.title + '</div><div class="s-count">' + stack[fromIndex].counts + "</div>";
+        float.style.width = rect.width + "px";
+        float.style.height = rect.height + "px";
+        float.style.left = rect.left + "px";
+        float.style.top = rect.top + "px";
+        document.body.appendChild(float);
+        reorder.float = float;
+        spanEl.classList.add("dragging-reorder");
+        paintReorderGhost();
+      }
+      if (!reorder.active) return;
+      ev.preventDefault();
+      const rail = countRail.getBoundingClientRect();
+      const x = ev.clientX - rail.left;
+      reorder.float.style.left = Math.max(rail.left, Math.min(ev.clientX - 20, rail.right - 40)) + "px";
+      reorder.float.style.top = rail.top + 8 + "px";
+
+      // Map x to insertion index among others
+      const others = stack.filter((a) => a.uid !== uid);
+      let cursor = 0;
+      let target = others.length;
+      const inset = 4;
+      const usable = rail.width - inset * 2;
+      const localX = ((ev.clientX - rail.left - inset) / usable) * blockSize;
+      for (let i = 0; i < others.length; i++) {
+        const mid = cursor + others[i].counts / 2;
+        if (localX < mid) {
+          target = i;
+          break;
+        }
+        cursor += others[i].counts;
+      }
+      if (target !== reorder.ghostIndex) {
+        reorder.ghostIndex = target;
+        paintReorderGhost();
+      }
+    };
+
+    const onUp = () => {
+      cleanup();
+      if (reorder.active) {
+        const item = stack.find((a) => a.uid === uid);
+        const without = stack.filter((a) => a.uid !== uid);
+        let insertAt = reorder.ghostIndex;
+        insertAt = Math.max(0, Math.min(without.length, insertAt));
+        without.splice(insertAt, 0, item);
+        stack = without;
+        selectedUid = uid;
+      }
+      reorder.active = false;
+      reorder.maybe = false;
+      reorder.uid = null;
+      render();
+      setTimeout(() => { suppressClick = false; }, 0);
+    };
+
+    function cleanup() {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      if (reorder.float) {
+        reorder.float.remove();
+        reorder.float = null;
+      }
     }
 
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
+  }
+
+  function paintReorderGhost() {
+    spansLayer.innerHTML = "";
+    emptyHint.classList.add("hide");
+    const others = stack.filter((a) => a.uid !== reorder.uid);
+    const g = Math.max(0, Math.min(others.length, reorder.ghostIndex));
+    const sequence = others.slice();
+    const moving = stack.find((a) => a.uid === reorder.uid);
+    sequence.splice(g, 0, { uid: "__ghost__", moveId: moving.moveId, speed: moving.speed, counts: moving.counts, ghost: true });
+
+    let cursor = 0;
+    sequence.forEach((item) => {
+      const pos = pct(cursor, item.counts);
+      const span = document.createElement("div");
+      if (item.ghost) {
+        span.className = "span ghost";
+        span.style.left = pos.left;
+        span.style.width = pos.width;
+        spansLayer.appendChild(span);
+        cursor += item.counts;
+        return;
+      }
+      const m = libById(item.moveId);
+      span.className = "span";
+      span.style.left = pos.left;
+      span.style.width = pos.width;
+      span.innerHTML =
+        '<div class="s-name">' + m.title + '</div><div class="s-count">' + item.counts + "</div>";
+      spansLayer.appendChild(span);
+      cursor += item.counts;
+    });
   }
 
   function updateRemainLive() {
@@ -1125,127 +1415,15 @@
     remainLabel.textContent =
       rem === 0 ? "Full · " + u + " / " + blockSize : u + " / " + blockSize + " · " + rem + " left";
     remainLabel.classList.toggle("full", rem === 0);
-    renderSeg();
     const locked = rem === 0 && u === blockSize;
-    blockPanel.classList.toggle("locked", locked);
+    gridPanel.classList.toggle("locked", locked);
     winBanner.classList.toggle("show", locked);
-  }
-
-  // --- Reorder via drag handle + ghost slot ---
-  let reorder = {
-    active: false,
-    uid: null,
-    fromIndex: -1,
-    ghostIndex: -1,
-    startY: 0,
-    cardH: 0,
-    floating: null
-  };
-
-  function paintReorderGhost() {
-    const scrollTop = placedList.scrollTop;
-    placedList.innerHTML = "";
-    const others = stack.filter((a) => a.uid !== reorder.uid);
-    const g = Math.max(0, Math.min(others.length, reorder.ghostIndex));
-    const sequence = others.slice();
-    // sentinel for ghost
-    sequence.splice(g, 0, null);
-    sequence.forEach((item) => {
-      if (!item) {
-        const ghost = document.createElement("div");
-        ghost.className = "atom-card ghost-slot";
-        ghost.style.minHeight = Math.max(44, reorder.cardH - 6) + "px";
-        ghost.innerHTML = '<div class="face"><span class="name">·</span><span class="count">0</span></div>';
-        placedList.appendChild(ghost);
-        return;
-      }
-      const m = libById(item.moveId);
-      const card = document.createElement("div");
-      card.className = "atom-card";
-      card.dataset.uid = item.uid;
-      card.innerHTML =
-        '<div class="drag-handle"><span></span><span></span><span></span></div>' +
-        '<div class="face"><span class="name">' + m.title + '</span><span class="count">' + item.counts + '</span></div>' +
-        '<span class="speed-chip">' + item.speed + '</span>';
-      placedList.appendChild(card);
-    });
-    placedList.scrollTop = scrollTop;
-  }
-
-  function startReorder(e, uid, card) {
-    e.stopPropagation();
-    e.preventDefault();
-    const fromIndex = stack.findIndex((a) => a.uid === uid);
-    if (fromIndex < 0) return;
-    selectedUid = uid;
-    reorder.active = true;
-    reorder.uid = uid;
-    reorder.fromIndex = fromIndex;
-    reorder.ghostIndex = fromIndex;
-    reorder.startY = e.clientY;
-    reorder.cardH = card.offsetHeight + 6;
-    dragState.didDrag = true;
-
-    // Floating clone follows pointer
-    const float = card.cloneNode(true);
-    float.classList.add("dragging-reorder", "selected");
-    float.style.position = "fixed";
-    float.style.left = card.getBoundingClientRect().left + "px";
-    float.style.width = card.offsetWidth + "px";
-    float.style.top = card.getBoundingClientRect().top + "px";
-    float.style.zIndex = "50";
-    float.style.pointerEvents = "none";
-    float.style.margin = "0";
-    document.body.appendChild(float);
-    reorder.floating = float;
-
-    paintReorderGhost();
-
-    const onMove = (ev) => {
-      if (!reorder.active) return;
-      float.style.top = (ev.clientY - reorder.cardH / 2) + "px";
-      const listRect = placedList.getBoundingClientRect();
-      const y = ev.clientY - listRect.top + placedList.scrollTop;
-      const othersLen = stack.length - 1;
-      let target = Math.floor(y / Math.max(1, reorder.cardH));
-      target = Math.max(0, Math.min(othersLen, target));
-      if (target !== reorder.ghostIndex) {
-        reorder.ghostIndex = target;
-        paintReorderGhost();
-      }
-    };
-
-    const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onUp);
-      if (reorder.floating) {
-        reorder.floating.remove();
-        reorder.floating = null;
-      }
-      const item = stack.find((a) => a.uid === uid);
-      const without = stack.filter((a) => a.uid !== uid);
-      let insertAt = reorder.ghostIndex;
-      insertAt = Math.max(0, Math.min(without.length, insertAt));
-      without.splice(insertAt, 0, item);
-      stack = without;
-
-      reorder.active = false;
-      reorder.uid = null;
-      render();
-      setTimeout(() => { dragState.didDrag = false; }, 0);
-    };
-
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onUp);
   }
 
   function renderPalette() {
     const rem = remaining();
     palette.innerHTML = "";
     LIBRARY.forEach((m) => {
-      // Can place if ANY speed's baseMin fits
       const minAny = Math.min(...Object.values(m.speeds));
       const fit = minAny <= rem && rem > 0;
       const btn = document.createElement("button");
@@ -1276,7 +1454,6 @@
         editDraft = null;
         pendingMoveId = m.id;
         pendingSpeed = defaultSpeed(m.id);
-        // If default doesn't fit, pick first that does
         if (!canFitMove(m.id, pendingSpeed)) {
           pendingSpeed = SPEEDS.find((s) => canFitMove(m.id, s)) || pendingSpeed;
         }
@@ -1345,7 +1522,7 @@
     selectedUid = uid;
     closeSheets();
     render();
-    const el = placedList.querySelector('[data-uid="' + uid + '"]');
+    const el = spansLayer.querySelector('[data-uid="' + uid + '"]');
     flashSnap(el);
   }
 
@@ -1374,7 +1551,6 @@
     editSpeedChips.innerHTML = "";
     SPEEDS.forEach((s) => {
       const bm = m.speeds[s];
-      // speed ok if we can keep at least one multiple of bm within remCap
       const fits = bm <= remCap;
       const b = document.createElement("button");
       b.type = "button";
@@ -1386,7 +1562,6 @@
         if (!fits) return;
         editDraft.speed = s;
         const step = bm;
-        // snap length to new baseMin, clamp to capacity
         let next = snapDown(editDraft.counts, step);
         if (next > remCap) next = snapDown(remCap, step);
         if (next < step) next = step;
@@ -1444,7 +1619,7 @@
     item.counts = counts;
     closeSheets();
     render();
-    const el = placedList.querySelector('[data-uid="' + item.uid + '"]');
+    const el = spansLayer.querySelector('[data-uid="' + item.uid + '"]');
     flashSnap(el);
   });
 
@@ -1467,7 +1642,7 @@
     stack.splice(idx + 1, 0, copy);
     selectedUid = copy.uid;
     render();
-    const el = placedList.querySelector('[data-uid="' + copy.uid + '"]');
+    const el = spansLayer.querySelector('[data-uid="' + copy.uid + '"]');
     if (el) {
       el.classList.add("dup-flash");
       flashSnap(el);
@@ -1485,8 +1660,8 @@
 
   function render() {
     renderChips();
-    renderSeg();
-    renderPlaced();
+    renderTicks();
+    renderSpans();
     renderPalette();
     if (pendingMoveId) renderSpeedChips();
     if (editDraft) renderEditSheet();
@@ -1498,7 +1673,7 @@
       rem === 0 ? "Full · " + u + " / " + blockSize : u + " / " + blockSize + " · " + rem + " left";
     remainLabel.classList.toggle("full", rem === 0);
     const locked = rem === 0 && u === blockSize;
-    blockPanel.classList.toggle("locked", locked);
+    gridPanel.classList.toggle("locked", locked);
     winBanner.classList.toggle("show", locked);
     btnUndo.disabled = stack.length === 0;
     btnClear.disabled = stack.length === 0;
@@ -1535,6 +1710,17 @@
   });
   menuClose.addEventListener("click", closeMenu);
   menuBackdrop.addEventListener("click", closeMenu);
+
+  // Deselect when tapping empty rail
+  countRail.addEventListener("pointerdown", (e) => {
+    if (e.target === countRail || e.target.classList.contains("tick") || e.target === tickRow || e.target === emptyHint) {
+      if (selectedUid) {
+        selectedUid = null;
+        closeMenu();
+        render();
+      }
+    }
+  });
 
   render();
 })();
