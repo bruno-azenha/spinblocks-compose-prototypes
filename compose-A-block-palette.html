@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Compose · Proto A — Block palette</title>
+  <style>
+    :root {
+      --sb-void: #07070a;
+      --sb-panel: #121218;
+      --sb-panel-elevated: #1a1a22;
+      --sb-steel: #8b8b9a;
+      --sb-steel-dim: #5c5c6a;
+      --sb-paper: #f4f2f7;
+      --sb-voltage: #c24bff;
+      --sb-voltage-deep: #7a1fd4;
+      --sb-voltage-glow: rgba(194, 75, 255, 0.4);
+      --sb-success: #6ee7b7;
+      --sb-danger: #fb7185;
+      --sb-radius-control: 14px;
+      --sb-radius-pill: 999px;
+      --sb-radius-tile: 22%;
+      --sb-motion-fast: 120ms;
+      --sb-motion-med: 220ms;
+      --sb-motion-slow: 420ms;
+      --spin-void: var(--sb-void);
+      --spin-panel: var(--sb-panel);
+      --spin-panel-elevated: var(--sb-panel-elevated);
+      --spin-steel: var(--sb-steel);
+      --spin-paper: var(--sb-paper);
+      --spin-voltage: var(--sb-voltage);
+      --spin-voltage-deep: var(--sb-voltage-deep);
+      --phone-w: 390px;
+      --phone-h: 844px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      :root {
+        --sb-motion-fast: 0ms;
+        --sb-motion-med: 0ms;
+        --sb-motion-slow: 0ms;
+      }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #0a0a0c;
+      color: var(--sb-paper);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+      padding: 1.5rem 1rem 3rem;
+    }
+    .proto-meta {
+      max-width: 420px;
+      text-align: center;
+      color: var(--sb-steel);
+      font-size: 0.85rem;
+      line-height: 1.45;
+    }
+    .proto-meta strong { color: var(--sb-paper); }
+    .phone {
+      width: var(--phone-w);
+      height: var(--phone-h);
+      background: var(--sb-void);
+      border-radius: 40px;
+      border: 3px solid #2a2a32;
+      box-shadow: 0 0 0 1px #111, 0 24px 80px rgba(0,0,0,.55);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .notch {
+      position: absolute;
+      top: 10px; left: 50%; transform: translateX(-50%);
+      width: 120px; height: 28px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 5;
+    }
+    .screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 52px 16px 20px;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .topbar h1 {
+      margin: 0 0 4px;
+      font-size: 1.05rem;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+    .hypo {
+      margin: 0 0 14px;
+      font-size: 0.72rem;
+      color: var(--sb-steel-dim);
+      line-height: 1.35;
+    }
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--sb-steel-dim);
+      margin-bottom: 8px;
+    }
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .chip {
+      appearance: none;
+      border: 1.5px solid var(--sb-steel-dim);
+      background: var(--sb-panel);
+      color: var(--sb-steel);
+      border-radius: var(--sb-radius-pill);
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      cursor: pointer;
+      transition: border-color var(--sb-motion-fast), color var(--sb-motion-fast),
+        box-shadow var(--sb-motion-fast), background var(--sb-motion-fast), transform var(--sb-motion-fast);
+    }
+    .chip:hover { border-color: var(--sb-steel); color: var(--sb-paper); }
+    .chip:focus-visible {
+      outline: 2px solid var(--sb-voltage);
+      outline-offset: 2px;
+    }
+    .chip:active { transform: scale(0.97); }
+    .chip[aria-pressed="true"] {
+      border-color: var(--sb-voltage);
+      color: var(--sb-paper);
+      background: var(--sb-panel-elevated);
+      box-shadow: 0 0 0 1px var(--sb-voltage), 0 0 18px var(--sb-voltage-glow);
+    }
+    .block-panel {
+      background: var(--sb-panel);
+      border: 1.5px solid #2a2a34;
+      border-radius: var(--sb-radius-control);
+      padding: 14px;
+      margin-bottom: 12px;
+      transition: border-color var(--sb-motion-med), box-shadow var(--sb-motion-med);
+    }
+    .block-panel.locked {
+      border-color: var(--sb-voltage);
+      box-shadow: 0 0 0 1px var(--sb-voltage), 0 0 28px var(--sb-voltage-glow);
+    }
+    .block-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+    .block-head .title {
+      font-weight: 650;
+      font-size: 0.95rem;
+    }
+    .block-head .remain {
+      font-size: 0.78rem;
+      color: var(--sb-steel);
+      font-variant-numeric: tabular-nums;
+    }
+    .block-head .remain.full { color: var(--sb-success); font-weight: 600; }
+    .seg-bar {
+      display: flex;
+      height: 10px;
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--sb-void);
+      gap: 1px;
+      margin-bottom: 12px;
+    }
+    .seg-bar .seg {
+      flex: 1;
+      background: #1e1e28;
+      transition: background var(--sb-motion-med);
+    }
+    .seg-bar .seg.filled {
+      background: linear-gradient(90deg, var(--sb-voltage-deep), var(--sb-voltage));
+    }
+    .placed {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 72px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .placed:empty::after {
+      content: "Tap a move below to place it in the block";
+      color: var(--sb-steel-dim);
+      font-size: 0.8rem;
+      padding: 12px 4px;
+      text-align: center;
+    }
+    .atom-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--sb-panel-elevated);
+      border: 1.5px solid #2a2a34;
+      border-radius: var(--sb-radius-control);
+      padding: 10px 12px;
+      animation: placeIn var(--sb-motion-med) ease-out;
+    }
+    @keyframes placeIn {
+      from { opacity: 0; transform: translateY(6px) scale(0.98); }
+      to { opacity: 1; transform: none; }
+    }
+    .atom-card .face {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      min-width: 0;
+    }
+    .atom-card .name {
+      font-weight: 650;
+      font-size: 0.92rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .atom-card .count {
+      font-variant-numeric: tabular-nums;
+      font-weight: 650;
+      font-size: 0.92rem;
+      color: var(--sb-paper);
+    }
+    .speed-chip {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--sb-steel);
+      background: transparent;
+      border: 1px solid var(--sb-steel-dim);
+      border-radius: var(--sb-radius-pill);
+      padding: 3px 8px;
+      text-transform: lowercase;
+      flex-shrink: 0;
+    }
+    .win-banner {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: var(--sb-radius-control);
+      background: rgba(194, 75, 255, 0.12);
+      color: var(--sb-paper);
+      font-weight: 650;
+      font-size: 0.9rem;
+      animation: glowPulse var(--sb-motion-slow) ease-in-out infinite alternate;
+    }
+    .win-banner.show { display: flex; }
+    @keyframes glowPulse {
+      from { box-shadow: 0 0 8px var(--sb-voltage-glow); }
+      to { box-shadow: 0 0 22px var(--sb-voltage-glow); }
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .btn {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      border-radius: var(--sb-radius-pill);
+      padding: 10px 16px;
+      font-size: 0.85rem;
+      font-weight: 650;
+      transition: transform var(--sb-motion-fast), background var(--sb-motion-fast),
+        box-shadow var(--sb-motion-fast), opacity var(--sb-motion-fast);
+    }
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+    .btn:focus-visible {
+      outline: 2px solid var(--sb-voltage);
+      outline-offset: 2px;
+    }
+    .btn:disabled { opacity: 0.35; cursor: default; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--sb-steel);
+      border: 1.5px solid var(--sb-steel-dim);
+      flex: 1;
+    }
+    .btn-ghost:hover:not(:disabled) { border-color: var(--sb-steel); color: var(--sb-paper); }
+    .palette-wrap {
+      margin-top: auto;
+      padding-top: 8px;
+      flex-shrink: 0;
+    }
+    .palette {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      max-height: 240px;
+      overflow-y: auto;
+      padding-bottom: 4px;
+    }
+    .move-tile {
+      appearance: none;
+      border: 1.5px solid #2a2a34;
+      background: var(--sb-panel);
+      color: var(--sb-paper);
+      border-radius: calc(var(--sb-radius-control) + 4px);
+      padding: 12px 10px;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color var(--sb-motion-fast), box-shadow var(--sb-motion-fast),
+        transform var(--sb-motion-fast), opacity var(--sb-motion-fast);
+      min-height: 64px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+    }
+    .move-tile:hover:not(:disabled) {
+      border-color: var(--sb-steel-dim);
+    }
+    .move-tile:focus-visible {
+      outline: 2px solid var(--sb-voltage);
+      outline-offset: 2px;
+    }
+    .move-tile:active:not(:disabled) { transform: scale(0.97); }
+    .move-tile:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+    }
+    .move-tile .t-name {
+      font-weight: 650;
+      font-size: 0.9rem;
+      letter-spacing: -0.01em;
+    }
+    .move-tile .t-count {
+      font-variant-numeric: tabular-nums;
+      font-size: 0.85rem;
+      font-weight: 650;
+      color: var(--sb-paper);
+    }
+
+    .move-tile .t-meta {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--sb-steel);
+      text-transform: lowercase;
+      letter-spacing: 0.02em;
+    }
+    .shake {
+      animation: shake var(--sb-motion-med) ease;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+    .foot-note {
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--sb-steel-dim);
+      max-width: 390px;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body data-sb-density="product">
+  <p class="proto-meta"><strong>Compose · Proto A</strong> — Block palette fill. Pick block size, then tap atoms to fill.</p>
+  <div class="phone" role="application" aria-label="Compose prototype A">
+    <div class="notch" aria-hidden="true"></div>
+    <div class="screen">
+      <header class="topbar">
+        <h1>Compose · Proto A</h1>
+      </header>
+      <p class="hypo">Block size first → fill with atomic moves. Speed comes from the move you pick.</p>
+
+      <div class="section-label">Block size</div>
+      <div class="chips" role="group" aria-label="Block size in counts" id="sizeChips"></div>
+
+      <div class="block-panel" id="blockPanel">
+        <div class="block-head">
+          <span class="title" id="blockTitle">16-count block</span>
+          <span class="remain" id="remainLabel">0 / 16 placed</span>
+        </div>
+        <div class="seg-bar" id="segBar" aria-hidden="true"></div>
+        <div class="placed" id="placedList" aria-live="polite"></div>
+        <div class="win-banner" id="winBanner" role="status">✦ Block locked</div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" id="btnUndo" disabled>Undo</button>
+        <button type="button" class="btn btn-ghost" id="btnClear" disabled>Clear</button>
+      </div>
+
+      <div class="palette-wrap">
+        <div class="section-label">Atomic moves · tap to place</div>
+        <div class="palette" id="palette" role="list"></div>
+      </div>
+    </div>
+  </div>
+  <p class="foot-note">Hypothesis prototype — not final spec</p>
+
+  <script>
+    const MOVES = [
+      { id: "push-slow", title: "Push", name: "Push", short: "Push", baseMin: 4, speed: "slow" },
+      { id: "push", title: "Push", name: "Push", short: "Push", baseMin: 2, speed: "normal" },
+      { id: "push-fast", title: "Push", name: "Push", short: "Push", baseMin: 1, speed: "fast" },
+      { id: "hover", title: "Hover", name: "Hover", short: "Hover", baseMin: 4, speed: "slow" },
+      { id: "tap-back", title: "Tap back", name: "Tap back", short: "Tap back", baseMin: 2, speed: "normal" },
+      { id: "arm-race", title: "Arm race", name: "Arm race", short: "Arm race", baseMin: 1, speed: "fast" },
+      { id: "climb", title: "Climb", name: "Climb", short: "Climb", baseMin: 8, speed: "slow" },
+    ];
+    const SIZES = [8, 16, 24, 32];
+
+    let blockSize = 16;
+    let stack = []; // { moveId, counts }
+
+    const sizeChips = document.getElementById("sizeChips");
+    const segBar = document.getElementById("segBar");
+    const placedList = document.getElementById("placedList");
+    const remainLabel = document.getElementById("remainLabel");
+    const blockTitle = document.getElementById("blockTitle");
+    const blockPanel = document.getElementById("blockPanel");
+    const winBanner = document.getElementById("winBanner");
+    const palette = document.getElementById("palette");
+    const btnUndo = document.getElementById("btnUndo");
+    const btnClear = document.getElementById("btnClear");
+
+    function used() {
+      return stack.reduce((s, a) => s + a.counts, 0);
+    }
+    function remaining() {
+      return blockSize - used();
+    }
+    function moveById(id) {
+      return MOVES.find((m) => m.id === id);
+    }
+
+    function renderChips() {
+      sizeChips.innerHTML = "";
+      SIZES.forEach((n) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "chip";
+        b.textContent = String(n);
+        b.setAttribute("aria-pressed", n === blockSize ? "true" : "false");
+        b.addEventListener("click", () => {
+          if (n === blockSize) return;
+          blockSize = n;
+          stack = [];
+          render();
+        });
+        sizeChips.appendChild(b);
+      });
+    }
+
+    function renderSeg() {
+      segBar.innerHTML = "";
+      const u = used();
+      for (let i = 0; i < blockSize; i++) {
+        const s = document.createElement("div");
+        s.className = "seg" + (i < u ? " filled" : "");
+        segBar.appendChild(s);
+      }
+    }
+
+    function renderPlaced() {
+      placedList.innerHTML = "";
+      stack.forEach((item) => {
+        const m = moveById(item.moveId);
+        const card = document.createElement("div");
+        card.className = "atom-card";
+        card.innerHTML =
+          '<div class="face"><span class="name">' +
+          m.short +
+          '</span><span class="count">' +
+          item.counts +
+          "</span></div>" +
+          '<span class="speed-chip">' +
+          m.speed +
+          "</span>";
+        placedList.appendChild(card);
+      });
+    }
+
+    function renderPalette() {
+      const rem = remaining();
+      palette.innerHTML = "";
+      MOVES.forEach((m) => {
+        const fit = m.baseMin <= rem;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "move-tile";
+        btn.disabled = !fit || rem === 0;
+        btn.setAttribute("role", "listitem");
+        btn.setAttribute(
+          "aria-label",
+          m.name + ", " + m.baseMin + " counts, " + m.speed + (fit ? "" : ", does not fit")
+        );
+        const titleDup = MOVES.filter((x) => x.short === m.short).length > 1;
+        btn.innerHTML =
+          '<span class="t-name">' +
+          m.short +
+          '</span><span class="t-count">' +
+          m.baseMin +
+          "</span>" +
+          (titleDup ? '<span class="t-meta">' + m.speed + "</span>" : "");
+        btn.addEventListener("click", () => {
+          if (!fit) {
+            palette.classList.remove("shake");
+            void palette.offsetWidth;
+            palette.classList.add("shake");
+            return;
+          }
+          stack.push({ moveId: m.id, counts: m.baseMin });
+          render();
+        });
+        palette.appendChild(btn);
+      });
+    }
+
+    function render() {
+      renderChips();
+      renderSeg();
+      renderPlaced();
+      renderPalette();
+      const u = used();
+      const rem = remaining();
+      blockTitle.textContent = blockSize + "-count block";
+      remainLabel.textContent =
+        rem === 0 ? "Full · " + u + " / " + blockSize : u + " / " + blockSize + " · " + rem + " left";
+      remainLabel.classList.toggle("full", rem === 0);
+      const locked = rem === 0 && u === blockSize;
+      blockPanel.classList.toggle("locked", locked);
+      winBanner.classList.toggle("show", locked);
+      btnUndo.disabled = stack.length === 0;
+      btnClear.disabled = stack.length === 0;
+    }
+
+    btnUndo.addEventListener("click", () => {
+      stack.pop();
+      render();
+    });
+    btnClear.addEventListener("click", () => {
+      stack = [];
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

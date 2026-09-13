@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Compose · Proto B — Count grid</title>
+  <style>
+    :root {
+      --sb-void: #07070a;
+      --sb-panel: #121218;
+      --sb-panel-elevated: #1a1a22;
+      --sb-steel: #8b8b9a;
+      --sb-steel-dim: #5c5c6a;
+      --sb-paper: #f4f2f7;
+      --sb-voltage: #c24bff;
+      --sb-voltage-deep: #7a1fd4;
+      --sb-voltage-glow: rgba(194, 75, 255, 0.4);
+      --sb-success: #6ee7b7;
+      --sb-danger: #fb7185;
+      --sb-radius-control: 14px;
+      --sb-radius-pill: 999px;
+      --sb-radius-tile: 22%;
+      --sb-motion-fast: 120ms;
+      --sb-motion-med: 220ms;
+      --sb-motion-slow: 420ms;
+      --spin-void: var(--sb-void);
+      --spin-panel: var(--sb-panel);
+      --spin-panel-elevated: var(--sb-panel-elevated);
+      --spin-steel: var(--sb-steel);
+      --spin-paper: var(--sb-paper);
+      --spin-voltage: var(--sb-voltage);
+      --phone-w: 390px;
+      --phone-h: 844px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      :root {
+        --sb-motion-fast: 0ms;
+        --sb-motion-med: 0ms;
+        --sb-motion-slow: 0ms;
+      }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #0a0a0c;
+      color: var(--sb-paper);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+      padding: 1.5rem 1rem 3rem;
+    }
+    .proto-meta {
+      max-width: 420px;
+      text-align: center;
+      color: var(--sb-steel);
+      font-size: 0.85rem;
+      line-height: 1.45;
+    }
+    .proto-meta strong { color: var(--sb-paper); }
+    .phone {
+      width: var(--phone-w);
+      height: var(--phone-h);
+      background: var(--sb-void);
+      border-radius: 40px;
+      border: 3px solid #2a2a32;
+      box-shadow: 0 0 0 1px #111, 0 24px 80px rgba(0,0,0,.55);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .notch {
+      position: absolute;
+      top: 10px; left: 50%; transform: translateX(-50%);
+      width: 120px; height: 28px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 5;
+    }
+    .screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 52px 16px 20px;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .topbar h1 {
+      margin: 0 0 4px;
+      font-size: 1.05rem;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+    .hypo {
+      margin: 0 0 14px;
+      font-size: 0.72rem;
+      color: var(--sb-steel-dim);
+      line-height: 1.35;
+    }
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--sb-steel-dim);
+      margin-bottom: 8px;
+    }
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .chip {
+      appearance: none;
+      border: 1.5px solid var(--sb-steel-dim);
+      background: var(--sb-panel);
+      color: var(--sb-steel);
+      border-radius: var(--sb-radius-pill);
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      cursor: pointer;
+      transition: border-color var(--sb-motion-fast), color var(--sb-motion-fast),
+        box-shadow var(--sb-motion-fast), background var(--sb-motion-fast), transform var(--sb-motion-fast);
+    }
+    .chip:hover { border-color: var(--sb-steel); color: var(--sb-paper); }
+    .chip:focus-visible {
+      outline: 2px solid var(--sb-voltage);
+      outline-offset: 2px;
+    }
+    .chip:active { transform: scale(0.97); }
+    .chip[aria-pressed="true"] {
+      border-color: var(--sb-voltage);
+      color: var(--sb-paper);
+      background: var(--sb-panel-elevated);
+      box-shadow: 0 0 0 1px var(--sb-voltage), 0 0 18px var(--sb-voltage-glow);
+    }
+    .progress-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .progress-row .prog {
+      font-size: 0.8rem;
+      color: var(--sb-steel);
+      font-variant-numeric: tabular-nums;
+    }
+    .progress-row .prog.full { color: var(--sb-success); font-weight: 600; }
+    .brush-hint {
+      font-size: 0.72rem;
+      color: var(--sb-steel-dim);
+      margin-bottom: 10px;
+      min-height: 1.2em;
+    }
+    .brush-hint strong { color: var(--sb-voltage); font-weight: 650; }
+    .grid-panel {
+      background: var(--sb-panel);
+      border: 1.5px solid #2a2a34;
+      border-radius: var(--sb-radius-control);
+      padding: 12px;
+      margin-bottom: 12px;
+      transition: border-color var(--sb-motion-med), box-shadow var(--sb-motion-med);
+      overflow-x: auto;
+    }
+    .grid-panel.locked {
+      border-color: var(--sb-voltage);
+      box-shadow: 0 0 0 1px var(--sb-voltage), 0 0 28px var(--sb-voltage-glow);
+    }
+    .count-grid {
+      display: flex;
+      gap: 3px;
+      min-height: 88px;
+      align-items: stretch;
+    }
+    .cell {
+      flex: 1 1 0;
+      min-width: 18px;
+      background: var(--sb-void);
+      border: 1.5px solid #22222c;
+      border-radius: 6px;
+      cursor: pointer;
+      position: relative;
+      transition: border-color var(--sb-motion-fast), background var(--sb-motion-fast),
+        box-shadow var(--sb-motion-fast), transform var(--sb-motion-fast);
+      padding: 0;
+      appearance: none;
+      color: inherit;
+    }
+    .cell:focus-visible {
+      outline: 2px solid var(--sb-voltage);
+      outline-offset: 1px;
+      z-index: 2;
+    }
+    .cell:hover:not(.occupied):not(:disabled) {
+      border-color: var(--sb-steel-dim);
+      background: var(--sb-panel-elevated);
+    }
+    .cell:disabled { cursor: default; }
+    .cell.paint-start:not(.occupied) {
+      box-shadow: inset 0 0 0 1px var(--sb-voltage-glow);
+    }
+    .tile-span {
+      position: absolute;
+      inset: 2px;
+      background: var(--sb-panel-elevated);
+      border: 1.5px solid #3a3a48;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 4px 2px;
+      pointer-events: none;
+      z-index: 1;
+      animation: paintIn var(--sb-motion-med) ease-out;
+    }
+    .tile-span.selected {
+      border-color: var(--sb-voltage);
+      box-shadow: 0 0 12px var(--sb-voltage-glow);
+    }
+    @keyframes paintIn {
+      from { opacity: 0; transform: scaleX(0.85); }
+      to { opacity: 1; transform: none; }
+    }
+    .tile-span .t-name {
+      font-weight: 650;
+      font-size: 0.62rem;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      line-height: 1.1;
+    }
+    .tile-span .t-count {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      font-size: 0.72rem;
+    }
+    .tile-span .t-speed {
+      font-size: 0.55rem;
+      color: var(--sb-steel);
+      text-transform: lowercase;
+      letter-spacing: 0.02em;
+    }
+    .win-banner {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: var(--sb-radius-control);
+      background: rgba(194, 75, 255, 0.12);
+      color: var(--sb-paper);
+      font-weight: 650;
+      font-size: 0.9rem;
+      animation: glowPulse var(--sb-motion-slow) ease-in-out infinite alternate;
+    }
+    .win-banner.show { display: flex; }
+    @keyframes glowPulse {
+      from { box-shadow: 0 0 8px var(--sb-voltage-glow); }
+      to { box-shadow: 0 0 22px var(--sb-voltage-glow); }
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .btn {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      border-radius: var(--sb-radius-pill);
+      padding: 10px 16px;
+      font-size: 0.85rem;
+      font-weight: 650;
+      transition: transform var(--sb-motion-fast), background var(--sb-motion-fast), opacity var(--sb-motion-fast);
+    }
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+    .btn:focus-visible {
+      outline: 2px solid var(--sb-voltage);
+      outline-offset: 2px;
+    }
+    .btn:disabled { opacity: 0.35; cursor: default; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--sb-steel);
+      border: 1.5px solid var(--sb-steel-dim);
+      flex: 1;
+    }
+    .btn-ghost:hover:not(:disabled) { border-color: var(--sb-steel); color: var(--sb-paper); }
+    .btn-primary {
+      background: var(--sb-voltage);
+      color: var(--sb-paper);
+      box-shadow: 0 0 18px var(--sb-voltage-glow);
+      flex: 1;
+    }
+    .palette-wrap {
+      margin-top: auto;
+      padding-top: 8px;
+      flex-shrink: 0;
+    }
+    .palette {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .move-tile {
+      appearance: none;
+      border: 1.5px solid #2a2a34;
+      background: var(--sb-panel);
+      color: var(--sb-paper);
+      border-radius: calc(var(--sb-radius-control) + 4px);
+      padding: 12px 10px;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color var(--sb-motion-fast), box-shadow var(--sb-motion-fast),
+        transform var(--sb-motion-fast);
+      min-height: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+    }
+    .move-tile:hover {
+      border-color: var(--sb-steel-dim);
+    }
+    .move-tile:focus-visible {
+      outline: 2px solid var(--sb-voltage);
+      outline-offset: 2px;
+    }
+    .move-tile:active { transform: scale(0.97); }
+    .move-tile[aria-pressed="true"] {
+      border-color: var(--sb-voltage);
+      box-shadow: 0 0 0 1px var(--sb-voltage), 0 0 16px var(--sb-voltage-glow);
+      background: var(--sb-panel-elevated);
+    }
+    .move-tile .t-name {
+      font-weight: 650;
+      font-size: 0.9rem;
+    }
+    .move-tile .t-count {
+      font-variant-numeric: tabular-nums;
+      font-size: 0.85rem;
+      font-weight: 650;
+    }
+
+    .move-tile .t-meta {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--sb-steel);
+      text-transform: lowercase;
+      letter-spacing: 0.02em;
+    }
+    .detail {
+      display: none;
+      margin-top: 8px;
+      padding: 10px 12px;
+      background: var(--sb-panel-elevated);
+      border-radius: var(--sb-radius-control);
+      border: 1.5px solid var(--sb-voltage);
+      box-shadow: 0 0 14px var(--sb-voltage-glow);
+      font-size: 0.78rem;
+      color: var(--sb-steel);
+    }
+    .detail.show { display: block; }
+    .detail .d-title { color: var(--sb-paper); font-weight: 650; margin-bottom: 4px; }
+    .foot-note {
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--sb-steel-dim);
+      max-width: 390px;
+    }
+    .shake { animation: shake var(--sb-motion-med) ease; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-3px); }
+      75% { transform: translateX(3px); }
+    }
+  </style>
+</head>
+<body data-sb-density="product">
+  <p class="proto-meta"><strong>Compose · Proto B</strong> — Count grid paint. Select a brush, tap a start cell.</p>
+  <div class="phone" role="application" aria-label="Compose prototype B">
+    <div class="notch" aria-hidden="true"></div>
+    <div class="screen">
+      <header class="topbar">
+        <h1>Compose · Proto B</h1>
+      </header>
+      <p class="hypo">Block size first → paint atoms onto the count grid. Speed is the move identity.</p>
+
+      <div class="section-label">Block size</div>
+      <div class="chips" role="group" aria-label="Block size in counts" id="sizeChips"></div>
+
+      <div class="progress-row">
+        <span class="section-label" style="margin:0">Count grid</span>
+        <span class="prog" id="progLabel">0 / 16 filled</span>
+      </div>
+      <p class="brush-hint" id="brushHint">Pick a move below — then tap a starting count</p>
+
+      <div class="grid-panel" id="gridPanel">
+        <div class="count-grid" id="countGrid" role="grid" aria-label="Counts in this block"></div>
+        <div class="detail" id="detail" role="status"></div>
+        <div class="win-banner" id="winBanner" role="status">✦ Block locked</div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" id="btnClear" disabled>Clear</button>
+        <button type="button" class="btn btn-ghost" id="btnDeselect">Deselect</button>
+      </div>
+
+      <div class="palette-wrap">
+        <div class="section-label">Brush · atomic moves</div>
+        <div class="palette" id="palette" role="listbox" aria-label="Atomic moves"></div>
+      </div>
+    </div>
+  </div>
+  <p class="foot-note">Hypothesis prototype — not final spec</p>
+
+  <script>
+    const MOVES = [
+      { id: "push-slow", title: "Push", name: "Push", short: "Push", baseMin: 4, speed: "slow" },
+      { id: "push", title: "Push", name: "Push", short: "Push", baseMin: 2, speed: "normal" },
+      { id: "push-fast", title: "Push", name: "Push", short: "Push", baseMin: 1, speed: "fast" },
+      { id: "hover", title: "Hover", name: "Hover", short: "Hover", baseMin: 4, speed: "slow" },
+      { id: "tap-back", title: "Tap back", name: "Tap back", short: "Tap back", baseMin: 2, speed: "normal" },
+      { id: "arm-race", title: "Arm race", name: "Arm race", short: "Arm race", baseMin: 1, speed: "fast" },
+      { id: "climb", title: "Climb", name: "Climb", short: "Climb", baseMin: 8, speed: "slow" },
+    ];
+    const SIZES = [8, 16, 24, 32];
+
+    let blockSize = 16;
+    let brushId = null;
+    let paints = []; // { id, moveId, start, length }
+    let selectedPaintId = null;
+    let nextPaintId = 1;
+
+    const sizeChips = document.getElementById("sizeChips");
+    const countGrid = document.getElementById("countGrid");
+    const gridPanel = document.getElementById("gridPanel");
+    const progLabel = document.getElementById("progLabel");
+    const brushHint = document.getElementById("brushHint");
+    const winBanner = document.getElementById("winBanner");
+    const palette = document.getElementById("palette");
+    const detail = document.getElementById("detail");
+    const btnClear = document.getElementById("btnClear");
+    const btnDeselect = document.getElementById("btnDeselect");
+
+    function moveById(id) {
+      return MOVES.find((m) => m.id === id);
+    }
+    function occupancy() {
+      const occ = new Array(blockSize).fill(null);
+      paints.forEach((p) => {
+        for (let i = p.start; i < p.start + p.length; i++) occ[i] = p.id;
+      });
+      return occ;
+    }
+    function filledCount() {
+      return paints.reduce((s, p) => s + p.length, 0);
+    }
+    function defaultLength(m) {
+      // baseMin × 2 when it fits, else baseMin
+      const prefer = m.baseMin * 2;
+      return prefer;
+    }
+    function canPaintAt(start, length) {
+      if (start + length > blockSize) return false;
+      const occ = occupancy();
+      for (let i = start; i < start + length; i++) {
+        if (occ[i] != null) return false;
+      }
+      return true;
+    }
+    function resolveLength(m, start) {
+      // Prefer baseMin*2, else baseMin; snap to multiples of baseMin; max that fits without overlap
+      const prefer = m.baseMin * 2;
+      const candidates = [];
+      for (let len = prefer; len >= m.baseMin; len -= m.baseMin) {
+        candidates.push(len);
+      }
+      // Also try longer if remaining allows multiples
+      const remSpace = blockSize - start;
+      for (let len = prefer + m.baseMin; len <= remSpace; len += m.baseMin) {
+        candidates.push(len);
+      }
+      candidates.sort((a, b) => {
+        // Prefer prefer length, then closest below, then above
+        const da = Math.abs(a - prefer);
+        const db = Math.abs(b - prefer);
+        if (da !== db) return da - db;
+        return b - a;
+      });
+      for (const len of candidates) {
+        if (len >= m.baseMin && len % m.baseMin === 0 && canPaintAt(start, len)) {
+          return len;
+        }
+      }
+      return null;
+    }
+
+    function renderChips() {
+      sizeChips.innerHTML = "";
+      SIZES.forEach((n) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "chip";
+        b.textContent = String(n);
+        b.setAttribute("aria-pressed", n === blockSize ? "true" : "false");
+        b.addEventListener("click", () => {
+          if (n === blockSize) return;
+          blockSize = n;
+          paints = [];
+          selectedPaintId = null;
+          render();
+        });
+        sizeChips.appendChild(b);
+      });
+    }
+
+    function renderGrid() {
+      countGrid.innerHTML = "";
+      const occ = occupancy();
+      const paintById = Object.fromEntries(paints.map((p) => [p.id, p]));
+      const rendered = new Set();
+
+      for (let i = 0; i < blockSize; i++) {
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "cell";
+        cell.setAttribute("role", "gridcell");
+        cell.setAttribute("aria-label", "Count " + (i + 1));
+        cell.dataset.index = String(i);
+
+        const pid = occ[i];
+        if (pid != null) {
+          cell.classList.add("occupied");
+          cell.disabled = true;
+          if (!rendered.has(pid)) {
+            rendered.add(pid);
+            const p = paintById[pid];
+            const m = moveById(p.moveId);
+            const span = document.createElement("div");
+            span.className = "tile-span" + (selectedPaintId === pid ? " selected" : "");
+            span.style.width = "calc(" + p.length + " * 100% + " + (p.length - 1) * 3 + "px)";
+            span.style.left = "2px";
+            span.innerHTML =
+              '<span class="t-name">' +
+              m.short +
+              '</span><span class="t-count">' +
+              p.length +
+              "</span>" +
+              (selectedPaintId === pid
+                ? '<span class="t-speed">' + m.speed + "</span>"
+                : "");
+            cell.style.position = "relative";
+            cell.style.overflow = "visible";
+            cell.appendChild(span);
+            // Make occupied start cell clickable for select
+            cell.disabled = false;
+            cell.addEventListener("click", (e) => {
+              e.stopPropagation();
+              selectedPaintId = selectedPaintId === pid ? null : pid;
+              render();
+            });
+          }
+        } else {
+          cell.addEventListener("click", () => onCellTap(i));
+        }
+        countGrid.appendChild(cell);
+      }
+    }
+
+    function onCellTap(start) {
+      if (!brushId) {
+        brushHint.innerHTML = "Pick a <strong>brush</strong> first — then tap a starting count";
+        palette.classList.remove("shake");
+        void palette.offsetWidth;
+        palette.classList.add("shake");
+        return;
+      }
+      const m = moveById(brushId);
+      const len = resolveLength(m, start);
+      if (len == null) {
+        gridPanel.classList.remove("shake");
+        void gridPanel.offsetWidth;
+        gridPanel.classList.add("shake");
+        return;
+      }
+      paints.push({ id: nextPaintId++, moveId: m.id, start, length: len });
+      selectedPaintId = paints[paints.length - 1].id;
+      render();
+    }
+
+    function renderPalette() {
+      palette.innerHTML = "";
+      MOVES.forEach((m) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "move-tile";
+        btn.setAttribute("role", "option");
+        btn.setAttribute("aria-pressed", brushId === m.id ? "true" : "false");
+        btn.setAttribute(
+          "aria-label",
+          m.name + ", " + m.baseMin + " counts, " + m.speed
+        );
+        const titleDup = MOVES.filter((x) => x.short === m.short).length > 1;
+        btn.innerHTML =
+          '<span class="t-name">' +
+          m.short +
+          '</span><span class="t-count">' +
+          m.baseMin +
+          "</span>" +
+          (titleDup ? '<span class="t-meta">' + m.speed + "</span>" : "");
+        btn.addEventListener("click", () => {
+          brushId = brushId === m.id ? null : m.id;
+          selectedPaintId = null;
+          render();
+        });
+        palette.appendChild(btn);
+      });
+    }
+
+    function renderDetail() {
+      if (selectedPaintId == null) {
+        detail.classList.remove("show");
+        detail.innerHTML = "";
+        return;
+      }
+      const p = paints.find((x) => x.id === selectedPaintId);
+      if (!p) {
+        detail.classList.remove("show");
+        return;
+      }
+      const m = moveById(p.moveId);
+      detail.classList.add("show");
+      detail.innerHTML =
+        '<div class="d-title">' +
+        m.name +
+        " · " +
+        p.length +
+        " counts</div>" +
+        "Speed <span style='color:var(--sb-steel)'>" +
+        m.speed +
+        "</span> · base " +
+        m.baseMin +
+        " · place " +
+        (p.start + 1) +
+        "–" +
+        (p.start + p.length);
+    }
+
+    function render() {
+      renderChips();
+      renderGrid();
+      renderPalette();
+      renderDetail();
+      const filled = filledCount();
+      progLabel.textContent = filled + " / " + blockSize + " filled";
+      progLabel.classList.toggle("full", filled === blockSize);
+      const locked = filled === blockSize;
+      gridPanel.classList.toggle("locked", locked);
+      winBanner.classList.toggle("show", locked);
+      btnClear.disabled = paints.length === 0;
+      if (brushId) {
+        const m = moveById(brushId);
+        brushHint.innerHTML =
+          "Brush: <strong>" +
+          m.short +
+          "</strong> · places ~" +
+          m.baseMin * 2 +
+          " (×" +
+          m.baseMin +
+          ") · tap a free start count";
+      } else {
+        brushHint.textContent = "Pick a move below — then tap a starting count";
+      }
+    }
+
+    btnClear.addEventListener("click", () => {
+      paints = [];
+      selectedPaintId = null;
+      render();
+    });
+    btnDeselect.addEventListener("click", () => {
+      brushId = null;
+      selectedPaintId = null;
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

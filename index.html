@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Spinblocks — Compose prototypes</title>
+  <style>
+    :root {
+      --sb-void: #07070a;
+      --sb-panel: #121218;
+      --sb-panel-elevated: #1a1a22;
+      --sb-steel: #8b8b9a;
+      --sb-steel-dim: #5c5c6a;
+      --sb-paper: #f4f2f7;
+      --sb-voltage: #c24bff;
+      --sb-voltage-deep: #7a1fd4;
+      --sb-voltage-glow: rgba(194, 75, 255, 0.4);
+      --sb-success: #6ee7b7;
+      --sb-danger: #fb7185;
+      --sb-radius-control: 14px;
+      --sb-radius-pill: 999px;
+      --sb-motion-fast: 120ms;
+      --sb-motion-med: 220ms;
+      --spin-void: var(--sb-void);
+      --spin-panel: var(--sb-panel);
+      --spin-paper: var(--sb-paper);
+      --spin-voltage: var(--sb-voltage);
+      --spin-steel: var(--sb-steel);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--sb-void);
+      color: var(--sb-paper);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      padding: 2.5rem 1.25rem 3rem;
+    }
+    .wrap {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.55rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    .lede {
+      margin: 0 0 28px;
+      color: var(--sb-steel);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .lede strong { color: var(--sb-paper); }
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    a.card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: var(--sb-panel);
+      border: 1.5px solid #2a2a34;
+      border-radius: var(--sb-radius-control);
+      padding: 18px 18px 16px;
+      transition: border-color var(--sb-motion-fast), box-shadow var(--sb-motion-fast),
+        transform var(--sb-motion-fast), background var(--sb-motion-fast);
+    }
+    a.card:hover {
+      border-color: var(--sb-voltage);
+      box-shadow: 0 0 0 1px var(--sb-voltage), 0 0 24px var(--sb-voltage-glow);
+      background: var(--sb-panel-elevated);
+      transform: translateY(-1px);
+    }
+    a.card:focus-visible {
+      outline: 2px solid var(--sb-voltage);
+      outline-offset: 3px;
+    }
+    a.card:active { transform: scale(0.995); }
+    .card-kicker {
+      font-size: 0.68rem;
+      font-weight: 650;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--sb-voltage);
+      margin-bottom: 6px;
+    }
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 1.15rem;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+    .card p {
+      margin: 0;
+      color: var(--sb-steel);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+    .foot {
+      margin-top: 28px;
+      font-size: 0.75rem;
+      color: var(--sb-steel-dim);
+      text-align: center;
+    }
+  </style>
+</head>
+<body data-sb-density="product">
+  <main class="wrap">
+    <h1>Spinblocks — Compose prototypes</h1>
+    <p class="lede">
+      Three ways to feel <strong>block-size-first</strong>, then fill with atomic moves.
+      Speed is implied by the move you pick — no dial.
+    </p>
+    <div class="cards">
+      <a class="card" href="compose-A-block-palette.html">
+        <div class="card-kicker">Proto A</div>
+        <h2>Block palette fill</h2>
+        <p>
+          Pick an 8 / 16 / 24 / 32 block, then tap atoms from a bottom palette to append.
+          Remaining counts gate what fits; exact fill locks the block.
+        </p>
+      </a>
+      <a class="card" href="compose-B-count-grid.html">
+        <div class="card-kicker">Proto B</div>
+        <h2>Count grid paint</h2>
+        <p>
+          Same block sizes, but the counts are a paint grid. Select a move as brush, tap a
+          start cell — tiles snap to baseMin multiples and never overlap.
+        </p>
+      </a>
+      <a class="card" href="compose-C-stack-fill.html">
+        <div class="card-kicker">Proto C</div>
+        <h2>Stack fill</h2>
+        <p>
+          Block size is stack capacity. Push moves on, step lengths in baseMin increments,
+          reorder with ↑↓ — satisfying meter when capacity is reached.
+        </p>
+      </a>
+    </div>
+    <p class="foot">Hypothesis prototype — not final spec · Electric Night</p>
+  </main>
+</body>
+</html>

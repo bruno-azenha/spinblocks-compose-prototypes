@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Compose · Proto C — Stack fill</title>
+  <style>
+    :root {
+      --sb-void: #07070a;
+      --sb-panel: #121218;
+      --sb-panel-elevated: #1a1a22;
+      --sb-steel: #8b8b9a;
+      --sb-steel-dim: #5c5c6a;
+      --sb-paper: #f4f2f7;
+      --sb-voltage: #c24bff;
+      --sb-voltage-deep: #7a1fd4;
+      --sb-voltage-glow: rgba(194, 75, 255, 0.4);
+      --sb-success: #6ee7b7;
+      --sb-danger: #fb7185;
+      --sb-radius-control: 14px;
+      --sb-radius-pill: 999px;
+      --sb-radius-tile: 22%;
+      --sb-motion-fast: 120ms;
+      --sb-motion-med: 220ms;
+      --sb-motion-slow: 420ms;
+      --spin-void: var(--sb-void);
+      --spin-panel: var(--sb-panel);
+      --spin-panel-elevated: var(--sb-panel-elevated);
+      --spin-steel: var(--sb-steel);
+      --spin-paper: var(--sb-paper);
+      --spin-voltage: var(--sb-voltage);
+      --phone-w: 390px;
+      --phone-h: 844px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      :root {
+        --sb-motion-fast: 0ms;
+        --sb-motion-med: 0ms;
+        --sb-motion-slow: 0ms;
+      }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #0a0a0c;
+      color: var(--sb-paper);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+      padding: 1.5rem 1rem 3rem;
+    }
+    .proto-meta {
+      max-width: 420px;
+      text-align: center;
+      color: var(--sb-steel);
+      font-size: 0.85rem;
+      line-height: 1.45;
+    }
+    .proto-meta strong { color: var(--sb-paper); }
+    .phone {
+      width: var(--phone-w);
+      height: var(--phone-h);
+      background: var(--sb-void);
+      border-radius: 40px;
+      border: 3px solid #2a2a32;
+      box-shadow: 0 0 0 1px #111, 0 24px 80px rgba(0,0,0,.55);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .notch {
+      position: absolute;
+      top: 10px; left: 50%; transform: translateX(-50%);
+      width: 120px; height: 28px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 5;
+    }
+    .screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 52px 16px 20px;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .topbar h1 {
+      margin: 0 0 4px;
+      font-size: 1.05rem;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+    .hypo {
+      margin: 0 0 14px;
+      font-size: 0.72rem;
+      color: var(--sb-steel-dim);
+      line-height: 1.35;
+    }
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--sb-steel-dim);
+      margin-bottom: 8px;
+    }
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .chip {
+      appearance: none;
+      border: 1.5px solid var(--sb-steel-dim);
+      background: var(--sb-panel);
+      color: var(--sb-steel);
+      border-radius: var(--sb-radius-pill);
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      cursor: pointer;
+      transition: border-color var(--sb-motion-fast), color var(--sb-motion-fast),
+        box-shadow var(--sb-motion-fast), background var(--sb-motion-fast), transform var(--sb-motion-fast);
+    }
+    .chip:hover { border-color: var(--sb-steel); color: var(--sb-paper); }
+    .chip:focus-visible {
+      outline: 2px solid var(--sb-voltage);
+      outline-offset: 2px;
+    }
+    .chip:active { transform: scale(0.97); }
+    .chip[aria-pressed="true"] {
+      border-color: var(--sb-voltage);
+      color: var(--sb-paper);
+      background: var(--sb-panel-elevated);
+      box-shadow: 0 0 0 1px var(--sb-voltage), 0 0 18px var(--sb-voltage-glow);
+    }
+    .meter-wrap {
+      margin-bottom: 12px;
+    }
+    .meter-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+    .meter-head .cap {
+      font-size: 0.8rem;
+      color: var(--sb-steel);
+      font-variant-numeric: tabular-nums;
+    }
+    .meter-head .cap.full { color: var(--sb-success); font-weight: 600; }
+    .meter {
+      height: 10px;
+      background: var(--sb-panel);
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #2a2a34;
+    }
+    .meter-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--sb-voltage-deep), var(--sb-voltage));
+      border-radius: 6px;
+      transition: width var(--sb-motion-med) ease;
+    }
+    .meter-fill.complete {
+      box-shadow: 0 0 16px var(--sb-voltage-glow);
+      animation: fillFlash var(--sb-motion-slow) ease;
+    }
+    @keyframes fillFlash {
+      0% { filter: brightness(1); }
+      40% { filter: brightness(1.35); }
+      100% { filter: brightness(1); }
+    }
+    .stack-panel {
+      background: var(--sb-panel);
+      border: 1.5px solid #2a2a34;
+      border-radius: var(--sb-radius-control);
+      padding: 10px;
+      margin-bottom: 10px;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: border-color var(--sb-motion-med), box-shadow var(--sb-motion-med);
+    }
+    .stack-panel.locked {
+      border-color: var(--sb-voltage);
+      box-shadow: 0 0 0 1px var(--sb-voltage), 0 0 28px var(--sb-voltage-glow);
+    }
+    .stack-panel:empty::after {
+      content: "Stack is empty — tap a move to push";
+      color: var(--sb-steel-dim);
+      font-size: 0.8rem;
+      padding: 24px 8px;
+      text-align: center;
+    }
+    .stack-card {
+      background: var(--sb-panel-elevated);
+      border: 1.5px solid #2a2a34;
+      border-radius: var(--sb-radius-control);
+      padding: 10px 12px;
+      animation: pushIn var(--sb-motion-med) ease-out;
+      transition: border-color var(--sb-motion-fast), box-shadow var(--sb-motion-fast);
+    }
+    .stack-card.selected {
+      border-color: var(--sb-voltage);
+      box-shadow: 0 0 14px var(--sb-voltage-glow);
+    }
+    @keyframes pushIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.96); }
+      to { opacity: 1; transform: none; }
+    }
+    .stack-card .face-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .stack-card .name {
+      font-weight: 650;
+      font-size: 0.95rem;
+    }
+    .stack-card .count {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .speed-chip {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--sb-steel);
+      border: 1px solid var(--sb-steel-dim);
+      border-radius: var(--sb-radius-pill);
+      padding: 3px 8px;
+      text-transform: lowercase;
+    }
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stepper button {
+      appearance: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      border: 1.5px solid var(--sb-steel-dim);
+      background: var(--sb-panel);
+      color: var(--sb-paper);
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      line-height: 1;
+      transition: border-color var(--sb-motion-fast), transform var(--sb-motion-fast), opacity var(--sb-motion-fast);
+    }
+    .stepper button:hover:not(:disabled) { border-color: var(--sb-steel); }
+    .stepper button:focus-visible {
+      outline: 2px solid var(--sb-voltage);
+      outline-offset: 2px;
+    }
+    .stepper button:active:not(:disabled) { transform: scale(0.95); }
+    .stepper button:disabled { opacity: 0.3; cursor: default; }
+    .stepper .step-label {
+      font-size: 0.7rem;
+      color: var(--sb-steel-dim);
+      font-variant-numeric: tabular-nums;
+      min-width: 52px;
+      text-align: center;
+    }
+    .reorder {
+      display: flex;
+      gap: 4px;
+    }
+    .reorder button {
+      appearance: none;
+      border: 1.5px solid var(--sb-steel-dim);
+      background: transparent;
+      color: var(--sb-steel);
+      border-radius: 8px;
+      width: 28px;
+      height: 28px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      padding: 0;
+    }
+    .reorder button:focus-visible {
+      outline: 2px solid var(--sb-voltage);
+      outline-offset: 2px;
+    }
+    .reorder button:disabled { opacity: 0.3; cursor: default; }
+    .win-banner {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: var(--sb-radius-control);
+      background: rgba(194, 75, 255, 0.12);
+      color: var(--sb-paper);
+      font-weight: 650;
+      font-size: 0.9rem;
+      animation: glowPulse var(--sb-motion-slow) ease-in-out infinite alternate;
+      flex-shrink: 0;
+    }
+    .win-banner.show { display: flex; }
+    @keyframes glowPulse {
+      from { box-shadow: 0 0 8px var(--sb-voltage-glow); }
+      to { box-shadow: 0 0 22px var(--sb-voltage-glow); }
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+    .btn {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      border-radius: var(--sb-radius-pill);
+      padding: 10px 16px;
+      font-size: 0.85rem;
+      font-weight: 650;
+      transition: transform var(--sb-motion-fast), opacity var(--sb-motion-fast);
+    }
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+    .btn:focus-visible {
+      outline: 2px solid var(--sb-voltage);
+      outline-offset: 2px;
+    }
+    .btn:disabled { opacity: 0.35; cursor: default; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--sb-steel);
+      border: 1.5px solid var(--sb-steel-dim);
+      flex: 1;
+    }
+    .btn-ghost:hover:not(:disabled) { border-color: var(--sb-steel); color: var(--sb-paper); }
+    .btn-primary {
+      background: var(--sb-voltage);
+      color: var(--sb-paper);
+      box-shadow: 0 0 18px var(--sb-voltage-glow);
+      flex: 1;
+    }
+    .palette-wrap {
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+    .palette {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      max-height: 168px;
+      overflow-y: auto;
+    }
+    .move-tile {
+      appearance: none;
+      border: 1.5px solid #2a2a34;
+      background: var(--sb-panel);
+      color: var(--sb-paper);
+      border-radius: calc(var(--sb-radius-control) + 4px);
+      padding: 10px;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color var(--sb-motion-fast), box-shadow var(--sb-motion-fast),
+        transform var(--sb-motion-fast), opacity var(--sb-motion-fast);
+      min-height: 52px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+    }
+    .move-tile:hover:not(:disabled) { border-color: var(--sb-steel-dim); }
+    .move-tile:focus-visible {
+      outline: 2px solid var(--sb-voltage);
+      outline-offset: 2px;
+    }
+    .move-tile:active:not(:disabled) { transform: scale(0.97); }
+    .move-tile:disabled { opacity: 0.38; cursor: not-allowed; }
+    .move-tile .t-name { font-weight: 650; font-size: 0.85rem; }
+    .move-tile .t-count {
+      font-variant-numeric: tabular-nums;
+      font-size: 0.8rem;
+      font-weight: 650;
+    }
+
+    .move-tile .t-meta {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--sb-steel);
+      text-transform: lowercase;
+      letter-spacing: 0.02em;
+    }
+    .foot-note {
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--sb-steel-dim);
+      max-width: 390px;
+    }
+    .shake { animation: shake var(--sb-motion-med) ease; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+  </style>
+</head>
+<body data-sb-density="product">
+  <p class="proto-meta"><strong>Compose · Proto C</strong> — Stack fill. Push moves onto a capacity stack; step lengths.</p>
+  <div class="phone" role="application" aria-label="Compose prototype C">
+    <div class="notch" aria-hidden="true"></div>
+    <div class="screen">
+      <header class="topbar">
+        <h1>Compose · Proto C</h1>
+      </header>
+      <p class="hypo">Block size = stack capacity. Push atoms; grow lengths in baseMin steps. Speed is the move.</p>
+
+      <div class="section-label">Stack capacity</div>
+      <div class="chips" role="group" aria-label="Block size in counts" id="sizeChips"></div>
+
+      <div class="meter-wrap">
+        <div class="meter-head">
+          <span class="section-label" style="margin:0">Capacity</span>
+          <span class="cap" id="capLabel">0 / 16</span>
+        </div>
+        <div class="meter" aria-hidden="true"><div class="meter-fill" id="meterFill"></div></div>
+      </div>
+
+      <div class="win-banner" id="winBanner" role="status">✦ Capacity reached — stack locked</div>
+
+      <div class="stack-panel" id="stackPanel" aria-live="polite"></div>
+
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" id="btnUndo" disabled>Undo</button>
+        <button type="button" class="btn btn-ghost" id="btnClear" disabled>Clear</button>
+      </div>
+
+      <div class="palette-wrap">
+        <div class="section-label">Push onto stack</div>
+        <div class="palette" id="palette" role="list"></div>
+      </div>
+    </div>
+  </div>
+  <p class="foot-note">Hypothesis prototype — not final spec</p>
+
+  <script>
+    const MOVES = [
+      { id: "push-slow", title: "Push", name: "Push", short: "Push", baseMin: 4, speed: "slow" },
+      { id: "push", title: "Push", name: "Push", short: "Push", baseMin: 2, speed: "normal" },
+      { id: "push-fast", title: "Push", name: "Push", short: "Push", baseMin: 1, speed: "fast" },
+      { id: "hover", title: "Hover", name: "Hover", short: "Hover", baseMin: 4, speed: "slow" },
+      { id: "tap-back", title: "Tap back", name: "Tap back", short: "Tap back", baseMin: 2, speed: "normal" },
+      { id: "arm-race", title: "Arm race", name: "Arm race", short: "Arm race", baseMin: 1, speed: "fast" },
+      { id: "climb", title: "Climb", name: "Climb", short: "Climb", baseMin: 8, speed: "slow" },
+    ];
+    const SIZES = [8, 16, 24, 32];
+
+    let blockSize = 16;
+    let stack = []; // { uid, moveId, counts }
+    let selectedUid = null;
+    let nextUid = 1;
+    let justLocked = false;
+
+    const sizeChips = document.getElementById("sizeChips");
+    const stackPanel = document.getElementById("stackPanel");
+    const capLabel = document.getElementById("capLabel");
+    const meterFill = document.getElementById("meterFill");
+    const winBanner = document.getElementById("winBanner");
+    const palette = document.getElementById("palette");
+    const btnUndo = document.getElementById("btnUndo");
+    const btnClear = document.getElementById("btnClear");
+
+    function moveById(id) {
+      return MOVES.find((m) => m.id === id);
+    }
+    function used() {
+      return stack.reduce((s, a) => s + a.counts, 0);
+    }
+    function remaining() {
+      return blockSize - used();
+    }
+
+    function renderChips() {
+      sizeChips.innerHTML = "";
+      SIZES.forEach((n) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "chip";
+        b.textContent = String(n);
+        b.setAttribute("aria-pressed", n === blockSize ? "true" : "false");
+        b.addEventListener("click", () => {
+          if (n === blockSize) return;
+          blockSize = n;
+          stack = [];
+          selectedUid = null;
+          justLocked = false;
+          render();
+        });
+        sizeChips.appendChild(b);
+      });
+    }
+
+    function renderStack() {
+      stackPanel.innerHTML = "";
+      stack.forEach((item, idx) => {
+        const m = moveById(item.moveId);
+        const rem = remaining();
+        const canGrow = rem >= m.baseMin;
+        const canShrink = item.counts > m.baseMin;
+
+        const card = document.createElement("div");
+        card.className = "stack-card" + (selectedUid === item.uid ? " selected" : "");
+        card.setAttribute("role", "listitem");
+
+        const face = document.createElement("div");
+        face.className = "face-row";
+        face.innerHTML =
+          '<span class="name">' +
+          m.short +
+          '</span><span class="count">' +
+          item.counts +
+          "</span>";
+        face.style.cursor = "pointer";
+        face.addEventListener("click", () => {
+          selectedUid = selectedUid === item.uid ? null : item.uid;
+          render();
+        });
+        card.appendChild(face);
+
+        const meta = document.createElement("div");
+        meta.className = "meta-row";
+
+        const left = document.createElement("div");
+        left.style.display = "flex";
+        left.style.alignItems = "center";
+        left.style.gap = "8px";
+
+        if (selectedUid === item.uid) {
+          const sp = document.createElement("span");
+          sp.className = "speed-chip";
+          sp.textContent = m.speed;
+          left.appendChild(sp);
+        }
+
+        const reorder = document.createElement("div");
+        reorder.className = "reorder";
+        const up = document.createElement("button");
+        up.type = "button";
+        up.textContent = "↑";
+        up.setAttribute("aria-label", "Move up");
+        up.disabled = idx === 0;
+        up.addEventListener("click", () => {
+          if (idx === 0) return;
+          const tmp = stack[idx - 1];
+          stack[idx - 1] = stack[idx];
+          stack[idx] = tmp;
+          render();
+        });
+        const down = document.createElement("button");
+        down.type = "button";
+        down.textContent = "↓";
+        down.setAttribute("aria-label", "Move down");
+        down.disabled = idx === stack.length - 1;
+        down.addEventListener("click", () => {
+          if (idx >= stack.length - 1) return;
+          const tmp = stack[idx + 1];
+          stack[idx + 1] = stack[idx];
+          stack[idx] = tmp;
+          render();
+        });
+        reorder.appendChild(up);
+        reorder.appendChild(down);
+        left.appendChild(reorder);
+
+        const stepper = document.createElement("div");
+        stepper.className = "stepper";
+        const minus = document.createElement("button");
+        minus.type = "button";
+        minus.textContent = "−";
+        minus.setAttribute("aria-label", "Shrink by " + m.baseMin);
+        minus.disabled = !canShrink;
+        minus.addEventListener("click", () => {
+          if (!canShrink) return;
+          item.counts -= m.baseMin;
+          justLocked = false;
+          render();
+        });
+        const stepLabel = document.createElement("span");
+        stepLabel.className = "step-label";
+        stepLabel.textContent = "×" + m.baseMin;
+        const plus = document.createElement("button");
+        plus.type = "button";
+        plus.textContent = "+";
+        plus.setAttribute("aria-label", "Grow by " + m.baseMin);
+        plus.disabled = !canGrow;
+        plus.addEventListener("click", () => {
+          if (!canGrow) return;
+          item.counts += m.baseMin;
+          render();
+        });
+        stepper.appendChild(minus);
+        stepper.appendChild(stepLabel);
+        stepper.appendChild(plus);
+
+        meta.appendChild(left);
+        meta.appendChild(stepper);
+        card.appendChild(meta);
+        stackPanel.appendChild(card);
+      });
+    }
+
+    function renderPalette() {
+      const rem = remaining();
+      palette.innerHTML = "";
+      MOVES.forEach((m) => {
+        const fit = m.baseMin <= rem;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "move-tile";
+        btn.disabled = !fit;
+        btn.setAttribute("role", "listitem");
+        btn.setAttribute(
+          "aria-label",
+          "Push " + m.name + ", " + m.baseMin + " counts, " + m.speed
+        );
+        const titleDup = MOVES.filter((x) => x.short === m.short).length > 1;
+        btn.innerHTML =
+          '<span class="t-name">' +
+          m.short +
+          '</span><span class="t-count">' +
+          m.baseMin +
+          "</span>" +
+          (titleDup ? '<span class="t-meta">' + m.speed + "</span>" : "");
+        btn.addEventListener("click", () => {
+          if (!fit) {
+            palette.classList.remove("shake");
+            void palette.offsetWidth;
+            palette.classList.add("shake");
+            return;
+          }
+          const uid = nextUid++;
+          stack.push({ uid, moveId: m.id, counts: m.baseMin });
+          selectedUid = uid;
+          render();
+        });
+        palette.appendChild(btn);
+      });
+    }
+
+    function render() {
+      renderChips();
+      renderStack();
+      renderPalette();
+      const u = used();
+      const rem = remaining();
+      const locked = rem === 0 && u === blockSize && stack.length > 0;
+      if (locked && !justLocked) {
+        justLocked = true;
+        meterFill.classList.remove("complete");
+        void meterFill.offsetWidth;
+        meterFill.classList.add("complete");
+      }
+      if (!locked) justLocked = false;
+
+      capLabel.textContent = u + " / " + blockSize + (rem ? " · " + rem + " left" : " · full");
+      capLabel.classList.toggle("full", locked);
+      meterFill.style.width = Math.min(100, (u / blockSize) * 100) + "%";
+      stackPanel.classList.toggle("locked", locked);
+      winBanner.classList.toggle("show", locked);
+      btnUndo.disabled = stack.length === 0;
+      btnClear.disabled = stack.length === 0;
+    }
+
+    btnUndo.addEventListener("click", () => {
+      stack.pop();
+      selectedUid = null;
+      justLocked = false;
+      render();
+    });
+    btnClear.addEventListener("click", () => {
+      stack = [];
+      selectedUid = null;
+      justLocked = false;
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
